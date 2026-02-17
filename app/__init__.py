@@ -46,9 +46,11 @@ def create_app(start_health_loop=True):
     from app.routes.health import health_bp
     from app.routes.services import services_bp
     from app.routes.web import web_bp
+    from app.routes.incidents import incidents_bp
 
     application.register_blueprint(health_bp)
     application.register_blueprint(services_bp)
     application.register_blueprint(web_bp)
+    application.register_blueprint(incidents_bp)
 
     return application
