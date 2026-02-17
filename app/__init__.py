@@ -10,10 +10,16 @@ from flask import Flask
 from flask_cors import CORS
 
 import config
+from app.services.service_manager import ServiceManager
 
 
-def create_app():
-    """Create and configure the Flask application."""
+def create_app(start_health_loop=True):
+    """Create and configure the Flask application.
+
+    Args:
+        start_health_loop: If True, start the background health-check
+            thread.  Set to False during testing.
+    """
     application = Flask(
         __name__,
         template_folder=str(config.BASE_DIR / "templates"),
@@ -29,9 +35,20 @@ def create_app():
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     )
 
+    # Service Manager — canonical registry backed by YAML
+    mgr = ServiceManager()
+    application.config["SERVICE_MANAGER"] = mgr
+
+    if start_health_loop:
+        mgr.start_health_loop()
+
     # Register blueprints
     from app.routes.health import health_bp
+    from app.routes.services import services_bp
+    from app.routes.web import web_bp
 
     application.register_blueprint(health_bp)
+    application.register_blueprint(services_bp)
+    application.register_blueprint(web_bp)
 
     return application

@@ -1,0 +1,403 @@
+# The Workshop — Canonical Service Registry
+# This file is the single source of truth for all AMTL applications.
+# Do NOT hardcode service data in Python — always read from here.
+#
+# Format: AMTL-WKS-TDD-1.0 §4
+# Updated: 2026-02-18
+
+services:
+
+  # ═══════════════════════════════════════════════════════════════
+  # CORE
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: elaine
+    name: ELAINE
+    description: "AI Chief of Staff — voice, delegation, ecosystem orchestration"
+    group: core
+    port: 5000
+    start_command: "python -m elaine.app"
+    working_dir: "~/amtl/elaine"
+    health_endpoint: "/health"
+    dependencies: []
+    recovery:
+      restart_attempts: 3
+      restart_delay: 10
+    ghost: false
+    favicon: "E"
+
+  - id: workshop
+    name: The Workshop
+    description: "Central service registry, launcher, and ecosystem nerve centre"
+    group: core
+    port: 5003
+    start_command: "python app.py"
+    working_dir: "~/amtl/workshop"
+    health_endpoint: "/api/health"
+    dependencies: []
+    recovery:
+      restart_attempts: 3
+      restart_delay: 10
+    ghost: false
+    favicon: "W"
+
+  - id: supervisor
+    name: Supervisor
+    description: "Runtime manager — process health, GPU scheduling, system monitoring"
+    group: core
+    port: 9000
+    start_command: "python -m supervisor.app"
+    working_dir: "~/amtl/supervisor"
+    health_endpoint: "/api/health"
+    dependencies: []
+    recovery:
+      restart_attempts: 3
+      restart_delay: 10
+    ghost: false
+    favicon: "S"
+
+  - id: foreperson
+    name: Foreperson
+    description: "Quality auditor — automated spec compliance and health checks"
+    group: core
+    port: 9100
+    start_command: "python -m foreperson.app"
+    working_dir: "~/amtl/foreperson"
+    health_endpoint: "/api/health"
+    dependencies:
+      - supervisor
+    recovery:
+      restart_attempts: 3
+      restart_delay: 10
+    ghost: false
+    favicon: "F"
+
+  - id: inspector
+    name: Inspector
+    description: "Code quality inspector — linting, testing, compliance reporting"
+    group: core
+    port: 9200
+    start_command: "python -m inspector.app"
+    working_dir: "~/amtl/inspector"
+    health_endpoint: "/api/health"
+    dependencies:
+      - foreperson
+    recovery:
+      restart_attempts: 3
+      restart_delay: 10
+    ghost: false
+    favicon: "I"
+
+  # ═══════════════════════════════════════════════════════════════
+  # CK – PERSONAL
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: ck-writer
+    name: CK Writer
+    description: "8-mode writing studio for long-form content"
+    group: ck-personal
+    port: 5004
+    start_command: "python -m ck_writer.app"
+    working_dir: "~/amtl/ck-writer"
+    health_endpoint: "/"
+    dependencies: []
+    recovery:
+      restart_attempts: 3
+      restart_delay: 10
+    ghost: false
+    favicon: "CW"
+
+  - id: learning-assistant
+    name: Learning Assistant
+    description: "AI-powered course generation, flashcards, knowledge graph"
+    group: ck-personal
+    port: 5002
+    start_command: "python -m app.main"
+    working_dir: "~/amtl/learning-assistant"
+    health_endpoint: "/api/health"
+    dependencies: []
+    recovery:
+      restart_attempts: 3
+      restart_delay: 10
+    ghost: false
+    favicon: "LA"
+
+  - id: costanza
+    name: "Costanza (CK Swiss Army Knife)"
+    description: "Mental models engine — 166 frameworks for decision-making"
+    group: ck-personal
+    port: 5014
+    start_command: "python -m costanza.app"
+    working_dir: "~/amtl/costanza"
+    health_endpoint: "/api/health"
+    dependencies: []
+    recovery:
+      restart_attempts: 3
+      restart_delay: 10
+    ghost: false
+    favicon: "C"
+
+  - id: author-studio
+    name: Author Studio
+    description: "Book writing and publishing workflow"
+    group: ck-personal
+    port: 5007
+    start_command: "python -m author_studio.app"
+    working_dir: "~/amtl/author-studio"
+    health_endpoint: "/api/health"
+    dependencies: []
+    recovery:
+      restart_attempts: 3
+      restart_delay: 10
+    ghost: false
+    favicon: "AS"
+
+  # ═══════════════════════════════════════════════════════════════
+  # CK – BUSINESS
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: ripple-crm
+    name: Ripple CRM
+    description: "Customer relationship management and pipeline tracking"
+    group: ck-business
+    port: 5001
+    start_command: "python -m ripple.app"
+    working_dir: "~/amtl/ripple"
+    health_endpoint: "/api/health"
+    dependencies: []
+    recovery:
+      restart_attempts: 3
+      restart_delay: 10
+    ghost: false
+    favicon: "R"
+
+  - id: junk-drawer
+    name: Junk Drawer
+    description: "Quick utilities, scratch pad, file management"
+    group: ck-business
+    port: 5005
+    ui_port: 3005
+    start_command: "python -m junk_drawer.app"
+    working_dir: "~/amtl/junk-drawer"
+    health_endpoint: "/api/health"
+    dependencies: []
+    recovery:
+      restart_attempts: 3
+      restart_delay: 10
+    ghost: false
+    favicon: "JD"
+
+  - id: opp-hunter
+    name: Opp Hunter
+    description: "Opportunity discovery and tracking"
+    group: ck-business
+    port: 5006
+    start_command: "python -m opp_hunter.app"
+    working_dir: "~/amtl/opp-hunter"
+    health_endpoint: "/api/health"
+    dependencies: []
+    recovery:
+      restart_attempts: 3
+      restart_delay: 10
+    ghost: false
+    favicon: "OH"
+
+  - id: the-ledger
+    name: The Ledger
+    description: "Financial tracking and invoicing"
+    group: ck-business
+    port: 5020
+    start_command: "python -m the_ledger.app"
+    working_dir: "~/amtl/the-ledger"
+    health_endpoint: "/api/health"
+    dependencies: []
+    recovery:
+      restart_attempts: 3
+      restart_delay: 10
+    ghost: false
+    favicon: "TL"
+
+  - id: genie
+    name: Genie
+    description: "AI automation and workflow engine"
+    group: ck-business
+    port: 8000
+    start_command: "python -m genie.app"
+    working_dir: "~/amtl/genie"
+    health_endpoint: "/api/health"
+    dependencies: []
+    recovery:
+      restart_attempts: 3
+      restart_delay: 10
+    ghost: false
+    favicon: "G"
+
+  # ═══════════════════════════════════════════════════════════════
+  # INTELLIGENCE
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: peterman
+    name: Peterman
+    description: "Research intelligence and information gathering"
+    group: intelligence
+    port: 5008
+    start_command: "python -m peterman.app"
+    working_dir: "~/amtl/peterman"
+    health_endpoint: "/api/health"
+    dependencies: []
+    recovery:
+      restart_attempts: 3
+      restart_delay: 10
+    ghost: false
+    favicon: "P"
+
+  - id: identity-atlas
+    name: Identity Atlas
+    description: "Identity mapping and profiling engine"
+    group: intelligence
+    port: 5009
+    start_command: "python -m identity_atlas.app"
+    working_dir: "~/amtl/identity-atlas"
+    health_endpoint: "/api/health"
+    dependencies: []
+    recovery:
+      restart_attempts: 3
+      restart_delay: 10
+    ghost: false
+    favicon: "IA"
+
+  - id: digital-sentinel
+    name: Digital Sentinel
+    description: "Security monitoring and threat detection"
+    group: intelligence
+    port: 5013
+    start_command: "python -m digital_sentinel.app"
+    working_dir: "~/amtl/digital-sentinel"
+    health_endpoint: "/api/health"
+    dependencies: []
+    recovery:
+      restart_attempts: 3
+      restart_delay: 10
+    ghost: false
+    favicon: "DS"
+
+  # ═══════════════════════════════════════════════════════════════
+  # MARKETING
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: spark
+    name: Spark
+    description: "Marketing content generation and campaign management"
+    group: marketing
+    port: 5011
+    start_command: "python -m spark.app"
+    working_dir: "~/amtl/spark"
+    health_endpoint: "/api/health"
+    dependencies: []
+    recovery:
+      restart_attempts: 3
+      restart_delay: 10
+    ghost: false
+    favicon: "Sp"
+
+  # ═══════════════════════════════════════════════════════════════
+  # OPERATIONS
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: processlens
+    name: ProcessLens
+    description: "Process mining and workflow optimisation"
+    group: operations
+    port: 5016
+    start_command: "python -m processlens.app"
+    working_dir: "~/amtl/processlens"
+    health_endpoint: "/api/health"
+    dependencies: []
+    recovery:
+      restart_attempts: 3
+      restart_delay: 10
+    ghost: false
+    favicon: "PL"
+
+  - id: signal
+    name: Signal
+    description: "Real-time notifications and alerting"
+    group: operations
+    port: 8420
+    start_command: "python -m signal_app.app"
+    working_dir: "~/amtl/signal"
+    health_endpoint: "/api/health"
+    dependencies: []
+    recovery:
+      restart_attempts: 3
+      restart_delay: 10
+    ghost: false
+    favicon: "Si"
+
+  # ═══════════════════════════════════════════════════════════════
+  # GHOST — Planned / Not Yet Built
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: sophia
+    name: Sophia
+    description: "Philosophical reasoning and ethical framework engine"
+    group: ghost
+    port: 5010
+    start_command: ""
+    working_dir: ""
+    health_endpoint: "/api/health"
+    dependencies: []
+    recovery:
+      restart_attempts: 0
+      restart_delay: 0
+    ghost: true
+    ghost_eta: "Q2 2026"
+    favicon: "So"
+
+  - id: amtl-tts
+    name: AMTL TTS
+    description: "Text-to-speech synthesis engine"
+    group: ghost
+    port: 5015
+    start_command: ""
+    working_dir: ""
+    health_endpoint: "/api/health"
+    dependencies: []
+    recovery:
+      restart_attempts: 0
+      restart_delay: 0
+    ghost: true
+    ghost_eta: "Q2 2026"
+    favicon: "TT"
+
+  - id: dhamma-mirror
+    name: Dhamma Mirror
+    description: "Buddhist wisdom and mindfulness companion"
+    group: ghost
+    port: 5019
+    start_command: ""
+    working_dir: ""
+    health_endpoint: "/api/health"
+    dependencies: []
+    recovery:
+      restart_attempts: 0
+      restart_delay: 0
+    ghost: true
+    ghost_eta: "Q3 2026"
+    favicon: "DM"
+
+  - id: after-i-go
+    name: After I Go
+    description: "Digital legacy and estate planning"
+    group: ghost
+    port: 5173
+    start_command: ""
+    working_dir: ""
+    health_endpoint: "/api/health"
+    dependencies: []
+    recovery:
+      restart_attempts: 0
+      restart_delay: 0
+    ghost: true
+    ghost_eta: "Q3 2026"
+    favicon: "AG"
