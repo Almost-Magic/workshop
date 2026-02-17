@@ -20,6 +20,8 @@ import requests
 import yaml
 
 import config
+from app.services import heartbeat as heartbeat_engine
+from app.services import resource_monitor
 
 log = logging.getLogger(__name__)
 
@@ -218,12 +220,19 @@ class ServiceManager:
         self._running = False
 
     def _health_loop(self):
-        """Periodically check every non-ghost service."""
+        """Periodically check every non-ghost service and record heartbeat."""
         while self._running:
             for svc in list(self._services.values()):
                 if svc.get("ghost"):
                     continue
-                self._ping(svc)
+                result = self._ping(svc)
+                # Record heartbeat data point
+                is_up = result and result.get("status") == "healthy"
+                heartbeat_engine.record(svc["id"], is_up)
+
+            # Prune old heartbeat data (>48h) once per cycle
+            heartbeat_engine.prune(keep_hours=48)
+
             time.sleep(config.HEALTH_INTERVAL)
 
     def _ping(self, svc):
@@ -315,8 +324,9 @@ class ServiceManager:
         """Return a copy of the service dict safe for API responses."""
         if svc is None:
             return None
+        svc_id = svc.get("id")
         return {
-            "id": svc.get("id"),
+            "id": svc_id,
             "name": svc.get("name"),
             "description": svc.get("description"),
             "group": svc.get("group"),
@@ -335,6 +345,6 @@ class ServiceManager:
             "ghost_eta": svc.get("ghost_eta"),
             "favicon": svc.get("favicon"),
             "dependencies": svc.get("dependencies", []),
-            "heartbeat": svc.get("heartbeat", []),
-            "resources": svc.get("resources", {}),
+            "heartbeat": heartbeat_engine.get_heartbeat(svc_id),
+            "resources": resource_monitor.get_resources(svc_id),
         }
