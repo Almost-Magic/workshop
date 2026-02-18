@@ -49,6 +49,7 @@ def create_app(start_health_loop=True):
     from app.routes.incidents import incidents_bp
     from app.routes.briefing import briefing_bp
     from app.routes.help import help_bp
+    from app.routes.constellation import constellation_bp
 
     application.register_blueprint(health_bp)
     application.register_blueprint(services_bp)
@@ -56,5 +57,6 @@ def create_app(start_health_loop=True):
     application.register_blueprint(incidents_bp)
     application.register_blueprint(briefing_bp)
     application.register_blueprint(help_bp)
+    application.register_blueprint(constellation_bp)
 
     return application
