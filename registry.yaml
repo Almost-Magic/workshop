@@ -221,9 +221,9 @@ services:
     name: Genie
     description: "AI Bookkeeper for Australian SMBs — local-first financial management with 30-minute BAS"
     group: ck-business
-    port: 5010
+    port: 8000
     start_command: "python run.py"
-    working_dir: "/mnt/c/AMTL/genie"
+    working_dir: "C:\\AMTL\\genie"
     health_endpoint: "/api/health"
     dependencies:
       - supervisor
@@ -343,7 +343,7 @@ services:
     name: Sophia
     description: "Philosophical reasoning and ethical framework engine"
     group: ghost
-    port: 5017
+    port: 5010
     start_command: ""
     working_dir: ""
     health_endpoint: "/api/health"
