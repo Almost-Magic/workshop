@@ -8,21 +8,17 @@ Tests verify:
 """
 
 import pytest
-
-from app import create_app
 from app.services.healer import SelfHealer
-from app.services import incident_logger
 
 
-@pytest.fixture(autouse=True)
-def clean_incidents():
-    incident_logger.clear_all()
-    yield
-    incident_logger.clear_all()
+# Uses fixtures from conftest.py:
+#   - client: Flask test client with isolated DB
+#   - clean_incidents: auto-clean before/after each test
 
 
 @pytest.fixture
 def healer():
+    from app import create_app
     application = create_app(start_health_loop=False)
     with application.app_context():
         mgr = application.config["SERVICE_MANAGER"]

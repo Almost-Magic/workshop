@@ -11,6 +11,7 @@ import logging
 import sqlite3
 import threading
 from datetime import datetime, timezone, timedelta
+from pathlib import Path
 
 import config
 
@@ -19,8 +20,29 @@ log = logging.getLogger(__name__)
 # Australian Eastern Standard Time offset (+10:00)
 AEST = timezone(timedelta(hours=10))
 
-_DB_PATH = config.DATA_DIR / "incidents.db"
+# Module-level path - can be overridden for test isolation
+_DB_PATH = None
 _lock = threading.Lock()
+
+
+def _get_db_path():
+    """Return the database path, defaulting to config.DATA_DIR if not set."""
+    global _DB_PATH
+    if _DB_PATH is None:
+        return config.DATA_DIR / "incidents.db"
+    return _DB_PATH
+
+
+def set_db_path(path):
+    """Set a custom DB path (for test isolation).
+
+    Also resets the counter to start fresh with the new database.
+    """
+    global _counter
+    global _DB_PATH
+    _DB_PATH = Path(path) if path else None
+    _counter = 0  # Reset counter for new isolated DB
+
 
 _CREATE_TABLE = """
 CREATE TABLE IF NOT EXISTS incidents (
@@ -50,7 +72,7 @@ def _next_id():
 
 def _connect():
     """Return a SQLite connection (creates table on first call)."""
-    conn = sqlite3.connect(str(_DB_PATH))
+    conn = sqlite3.connect(str(_get_db_path()))
     conn.row_factory = sqlite3.Row
     conn.execute(_CREATE_TABLE)
     return conn

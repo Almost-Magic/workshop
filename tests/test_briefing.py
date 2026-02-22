@@ -7,25 +7,11 @@ Tests cover:
   - Warnings list from recent escalations
 """
 
-import pytest
-
-from app import create_app
 from app.services import incident_logger
 
-
-@pytest.fixture(autouse=True)
-def clean_incidents():
-    incident_logger.clear_all()
-    yield
-    incident_logger.clear_all()
-
-
-@pytest.fixture
-def client():
-    application = create_app(start_health_loop=False)
-    application.config["TESTING"] = True
-    return application.test_client()
-
+# Uses fixtures from conftest.py:
+#   - client: Flask test client with isolated DB
+#   - clean_incidents: auto-clean before/after each test
 
 # ── Beast: Structure ───────────────────────────────────────────────────────
 

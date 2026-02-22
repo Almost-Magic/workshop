@@ -29,13 +29,14 @@ log = logging.getLogger(__name__)
 class ServiceManager:
     """Central service registry and lifecycle manager."""
 
-    def __init__(self, registry_path=None):
+    def __init__(self, registry_path=None, healer=None):
         self._registry_path = Path(registry_path or config.REGISTRY_PATH)
         self._services = {}          # id → service dict (from YAML + runtime)
         self._health_thread = None
         self._running = False
         self._lock = threading.Lock()
         self._start_time = time.time()
+        self._healer = healer
 
         self._load_registry()
 
@@ -229,6 +230,10 @@ class ServiceManager:
                 # Record heartbeat data point
                 is_up = result and result.get("status") == "healthy"
                 heartbeat_engine.record(svc["id"], is_up)
+
+                # If health check failed and healer is configured, trigger healing
+                if not is_up and self._healer is not None:
+                    self._healer.on_health_failure(svc["id"])
 
             # Prune old heartbeat data (>48h) once per cycle
             heartbeat_engine.prune(keep_hours=48)

@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Incidents — The Workshop</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* AMTL Midnight theme */
+        :root {
+            --bg-primary: #0A0E14;
+            --bg-secondary: #151B24;
+            --bg-tertiary: #1C2430;
+            --text-primary: #E6EDF3;
+            --text-secondary: #8B949E;
+            --accent: #58A6FF;
+            --success: #3FB950;
+            --warning: #D29922;
+            --danger: #F85149;
+            --border: #30363D;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .nav {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+
+        .nav a:hover {
+            color: var(--accent);
+        }
+
+        .nav a.active {
+            color: var(--accent);
+            border-bottom: 2px solid var(--accent);
+        }
+
+        /* Main content */
+        .main {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Filters */
+        .filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filter-group label {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        select, input[type="text"] {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        /* Incidents table */
+        .incidents-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .incidents-table th {
+            background: var(--bg-tertiary);
+            text-align: left;
+            padding: 1rem;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .incidents-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+
+        .incidents-table tr:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .incidents-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Status badges */
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .badge.recovered {
+            background: rgba(63, 185, 80, 0.15);
+            color: var(--success);
+        }
+
+        .badge.escalated {
+            background: rgba(248, 81, 73, 0.15);
+            color: var(--danger);
+        }
+
+        .badge.pending, .badge.none {
+            background: rgba(210, 153, 34, 0.15);
+            color: var(--warning);
+        }
+
+        /* Annotation */
+        .annotation-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 0.4rem 0.75rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+
+        .annotation-btn:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .annotation-form {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .annotation-form input {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .annotation-form button {
+            background: var(--accent);
+            border: none;
+            color: white;
+            padding: 0.4rem 0.75rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .annotation-display {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state h2 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        /* Timestamp */
+        .timestamp {
+            font-family: 'SF Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        /* Event types */
+        .event-type {
+            font-weight: 500;
+        }
+
+        .event-type.crash {
+            color: var(--danger);
+        }
+
+        .event-type.restart {
+            color: var(--warning);
+        }
+
+        .event-type.start, .event-type.stop {
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>🛠️ The Workshop — Incidents</h1>
+        <nav class="nav">
+            <a href="/">Dashboard</a>
+            <a href="/incidents" class="active">Incidents</a>
+        </nav>
+    </header>
+
+    <main class="main">
+        <form class="filters" method="get">
+            <div class="filter-group">
+                <label for="app">App:</label>
+                <select name="app" id="app">
+                    <option value="">All Apps</option>
+                    {% for svc in services %}
+                    <option value="{{ svc.id }}" {% if app_filter == svc.id %}selected{% endif %}>
+                        {{ svc.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="date">Date:</label>
+                <select name="date" id="date">
+                    <option value="all" {% if date_filter == 'all' %}selected{% endif %}>All Time</option>
+                    <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Today</option>
+                    <option value="7days" {% if date_filter == '7days' %}selected{% endif %}>Last 7 Days</option>
+                </select>
+            </div>
+
+            <button type="submit" class="annotation-btn">Apply Filters</button>
+        </form>
+
+        {% if incidents %}
+        <table class="incidents-table">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>App</th>
+                    <th>Event</th>
+                    <th>Cause</th>
+                    <th>Outcome</th>
+                    <th>Annotation</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inc in incidents %}
+                <tr>
+                    <td class="timestamp">{{ inc.timestamp }}</td>
+                    <td>{{ inc.app_id }}</td>
+                    <td class="event-type {{ inc.event }}">{{ inc.event }}</td>
+                    <td>{{ inc.cause or '—' }}</td>
+                    <td>
+                        <span class="badge {{ inc.outcome or 'none' }}">
+                            {{ inc.outcome or 'pending' }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if inc.annotation %}
+                        <span class="annotation-display">{{ inc.annotation }}</span>
+                        {% endif %}
+                        <button class="annotation-btn" onclick="showAnnotationForm('{{ inc.id }}')">
+                            {{ 'Edit' if inc.annotation else 'Add Note' }}
+                        </button>
+                        <div id="form-{{ inc.id }}" class="annotation-form" style="display: none;">
+                            <input type="text" id="note-{{ inc.id }}" value="{{ inc.annotation or '' }}" placeholder="Add a note...">
+                            <button onclick="saveAnnotation('{{ inc.id }}')">Save</button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <h2>No incidents found</h2>
+            <p>There are no incidents matching your filters.</p>
+        </div>
+        {% endif %}
+    </main>
+
+    <script>
+        function showAnnotationForm(id) {
+            const form = document.getElementById('form-' + id);
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        }
+
+        async function saveAnnotation(id) {
+            const note = document.getElementById('note-' + id).value;
+
+            try {
+                const response = await fetch('/api/incidents/' + id + '/annotate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ note: note }),
+                });
+
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('Failed to save annotation');
+                }
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+    </script>
+</body>
+</html>
