@@ -237,9 +237,14 @@ class ServiceManager:
 
     def _ping(self, svc):
         """HTTP GET the service's health endpoint.  Updates status in place."""
-        port = svc.get("port")
-        endpoint = svc.get("health_endpoint", "/api/health")
-        url = f"http://localhost:{port}{endpoint}"
+        endpoint = svc.get("health_endpoint", "")
+        if endpoint.startswith("http"):
+            url = endpoint
+        else:
+            # Fallback: construct URL from ports dict or port scalar
+            ports = svc.get("ports", {})
+            port = ports.get("api") if isinstance(ports, dict) else svc.get("port")
+            url = f"http://localhost:{port}{endpoint or '/api/health'}"
         start = time.time()
 
         try:
@@ -325,13 +330,17 @@ class ServiceManager:
         if svc is None:
             return None
         svc_id = svc.get("id")
+        # Handle both 'ports' dict and legacy 'port' scalar
+        ports = svc.get("ports", {})
+        api_port = ports.get("api") if isinstance(ports, dict) else svc.get("port")
+        ui_port = ports.get("ui") if isinstance(ports, dict) else svc.get("ui_port")
         return {
             "id": svc_id,
             "name": svc.get("name"),
             "description": svc.get("description"),
             "group": svc.get("group"),
-            "port": svc.get("port"),
-            "ui_port": svc.get("ui_port"),
+            "port": api_port,
+            "ui_port": ui_port,
             "status": svc.get("status", "stopped"),
             "health": svc.get("health", "unknown"),
             "uptime_seconds": (

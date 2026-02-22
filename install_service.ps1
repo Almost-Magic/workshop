@@ -1,29 +1,70 @@
 # The Workshop — nssm Service Registration
 # Run as Administrator on Windows.
 #
-# Registers The Workshop Flask API as a Windows service
-# via nssm 2.24. The service starts automatically at boot
-# and restarts on failure.
+# Registers The Workshop Flask API and Meta-Watchdog as Windows services
+# via nssm 2.24. Both services start automatically at boot
+# and restart on failure.
 #
-# Usage:
+# Usage (paste into Cline or run as Admin in PowerShell):
 #   powershell -ExecutionPolicy Bypass -File install_service.ps1
+#
+# Ref: AMTL-WKS-BLD-1.0 Phase 0, DEC-004
 
 $ErrorActionPreference = "Stop"
 
-# ── Paths ──────────────────────────────────────────────────────────────────
-$nssm = "$env:LOCALAPPDATA\Microsoft\WinGet\Packages\NSSM.NSSM_Microsoft.Winget.Source_8wekyb3d8bbwe\nssm-2.24-101-g897c7ad\win64\nssm.exe"
-$python = "python"
+# ── Find nssm ────────────────────────────────────────────────────────────────
+# Check PATH first, then common locations, then winget package path
+$nssm = $null
+$nssmCandidates = @(
+    (Get-Command nssm -ErrorAction SilentlyContinue).Source,
+    "C:\tools\nssm\win64\nssm.exe",
+    "C:\nssm\win64\nssm.exe",
+    "$env:ProgramFiles\nssm\win64\nssm.exe",
+    "$env:LOCALAPPDATA\Microsoft\WinGet\Packages\NSSM.NSSM_Microsoft.Winget.Source_8wekyb3d8bbwe\nssm-2.24-101-g897c7ad\win64\nssm.exe"
+)
+
+foreach ($candidate in $nssmCandidates) {
+    if ($candidate -and (Test-Path $candidate)) {
+        $nssm = $candidate
+        break
+    }
+}
+
+if (-not $nssm) {
+    Write-Host "nssm not found. Installing via winget..." -ForegroundColor Yellow
+    winget install NSSM.NSSM --accept-package-agreements --accept-source-agreements
+    # Try to find it after install
+    $nssm = (Get-Command nssm -ErrorAction SilentlyContinue).Source
+    if (-not $nssm) {
+        Write-Host "ERROR: nssm still not found after install. Please install manually from https://nssm.cc/download" -ForegroundColor Red
+        exit 1
+    }
+}
+
+Write-Host "Using nssm at: $nssm" -ForegroundColor Cyan
+
+# ── Find Python ───────────────────────────────────────────────────────────────
+$python = (Get-Command python -ErrorAction SilentlyContinue).Source
+if (-not $python) {
+    Write-Host "ERROR: Python not found on PATH." -ForegroundColor Red
+    exit 1
+}
+Write-Host "Using Python at: $python" -ForegroundColor Cyan
+
+# ── Paths ─────────────────────────────────────────────────────────────────────
 $workshopDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $appScript = Join-Path $workshopDir "app.py"
 $logDir = Join-Path $workshopDir "logs"
+
+Write-Host "Workshop directory: $workshopDir" -ForegroundColor Cyan
 
 # Ensure log directory exists
 if (-not (Test-Path $logDir)) {
     New-Item -ItemType Directory -Path $logDir | Out-Null
 }
 
-# ── Remove existing service if present ─────────────────────────────────────
-Write-Host "Checking for existing AMTL-Workshop service..."
+# ── Remove existing Workshop service if present ──────────────────────────────
+Write-Host "`nChecking for existing AMTL-Workshop service..."
 $existing = & $nssm status AMTL-Workshop 2>&1
 if ($LASTEXITCODE -eq 0) {
     Write-Host "Stopping and removing existing service..."
@@ -31,7 +72,7 @@ if ($LASTEXITCODE -eq 0) {
     & $nssm remove AMTL-Workshop confirm
 }
 
-# ── Install Workshop API service ───────────────────────────────────────────
+# ── Install Workshop API service ─────────────────────────────────────────────
 Write-Host "Installing AMTL-Workshop service..."
 & $nssm install AMTL-Workshop $python $appScript
 & $nssm set AMTL-Workshop AppDirectory $workshopDir
@@ -46,15 +87,13 @@ Write-Host "Installing AMTL-Workshop service..."
 Write-Host "Starting AMTL-Workshop service..."
 & $nssm start AMTL-Workshop
 
-Write-Host ""
-Write-Host "AMTL-Workshop service installed and started." -ForegroundColor Green
+Write-Host "`nAMTL-Workshop service installed and started." -ForegroundColor Green
 Write-Host "Verify: curl http://localhost:5003/api/health"
 
-# ── Install Watchdog service ───────────────────────────────────────────────
+# ── Remove existing Watchdog service if present ──────────────────────────────
 $watchdogScript = Join-Path $workshopDir "watchdog.py"
 
-Write-Host ""
-Write-Host "Checking for existing AMTL-Watchdog service..."
+Write-Host "`nChecking for existing AMTL-Watchdog service..."
 $existing = & $nssm status AMTL-Watchdog 2>&1
 if ($LASTEXITCODE -eq 0) {
     Write-Host "Stopping and removing existing watchdog..."
@@ -62,6 +101,7 @@ if ($LASTEXITCODE -eq 0) {
     & $nssm remove AMTL-Watchdog confirm
 }
 
+# ── Install Watchdog service ─────────────────────────────────────────────────
 Write-Host "Installing AMTL-Watchdog service..."
 & $nssm install AMTL-Watchdog $python $watchdogScript
 & $nssm set AMTL-Watchdog AppDirectory $workshopDir
@@ -74,7 +114,8 @@ Write-Host "Installing AMTL-Watchdog service..."
 Write-Host "Starting AMTL-Watchdog service..."
 & $nssm start AMTL-Watchdog
 
-Write-Host ""
+Write-Host "`n════════════════════════════════════════════════════════════" -ForegroundColor Green
 Write-Host "Both services installed and running." -ForegroundColor Green
-Write-Host "  AMTL-Workshop  → http://localhost:5003/api/health"
-Write-Host "  AMTL-Watchdog  → monitoring Workshop + Supervisor every 30s"
+Write-Host "  AMTL-Workshop  → http://localhost:5003/api/health" -ForegroundColor Green
+Write-Host "  AMTL-Watchdog  → monitoring Workshop + Supervisor every 30s" -ForegroundColor Green
+Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor Green
