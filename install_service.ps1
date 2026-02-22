@@ -77,7 +77,7 @@ Write-Host "Installing AMTL-Workshop service..."
 & $nssm install AMTL-Workshop $python $appScript
 & $nssm set AMTL-Workshop AppDirectory $workshopDir
 & $nssm set AMTL-Workshop DisplayName "AMTL Workshop API"
-& $nssm set AMTL-Workshop Description "The Workshop — AMTL Central Service Registry & Launcher (port 5003)"
+& $nssm set AMTL-Workshop Description "AMTL Central Service Registry and Launcher on port 5003"
 & $nssm set AMTL-Workshop Start SERVICE_AUTO_START
 & $nssm set AMTL-Workshop AppStdout (Join-Path $logDir "workshop.log")
 & $nssm set AMTL-Workshop AppStderr (Join-Path $logDir "workshop-error.log")

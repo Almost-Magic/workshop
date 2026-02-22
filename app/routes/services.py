@@ -150,16 +150,8 @@ def command():
         if query in name_lower or query in port_str or query in svc["id"]:
             matches.append(svc)
 
-    if len(matches) == 1:
-        target = matches[0]
-        return jsonify({
-            "action": "open",
-            "target": target["id"],
-            "display": f"Open {target['name']} (:{target['port']})",
-            "executing": True,
-        })
-
-    if matches:
+    # Return disambiguate if multiple matches, even if query is short
+    if len(matches) > 1:
         return jsonify({
             "action": "disambiguate",
             "matches": [
@@ -167,6 +159,15 @@ def command():
                 for m in matches
             ],
             "executing": False,
+        })
+
+    if len(matches) == 1:
+        target = matches[0]
+        return jsonify({
+            "action": "open",
+            "target": target["id"],
+            "display": f"Open {target['name']} (:{target['port']})",
+            "executing": True,
         })
 
     return jsonify({"action": "none", "display": "No matches found.", "executing": False})

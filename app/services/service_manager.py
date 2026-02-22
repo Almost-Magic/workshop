@@ -89,12 +89,12 @@ class ServiceManager:
             return self._public_view(svc) if svc else None
 
     def get_by_group(self, group):
-        """Return all services belonging to *group*."""
+        """Return all services belonging to *group* (case-insensitive)."""
         with self._lock:
             return [
                 self._public_view(s)
                 for s in self._services.values()
-                if s.get("group") == group
+                if s.get("group", "").lower() == group.lower()
             ]
 
     @property
@@ -172,10 +172,10 @@ class ServiceManager:
         return {"status": "restarting", "attempt": svc["restart_count"]}
 
     def start_group(self, group):
-        """Start all non-ghost services in a group."""
+        """Start all non-ghost services in a group (case-insensitive)."""
         results = {}
         for svc in self._services.values():
-            if svc.get("group") == group and not svc.get("ghost"):
+            if svc.get("group", "").lower() == group.lower() and not svc.get("ghost"):
                 if svc.get("status") != "running":
                     self._spawn(svc)
                     results[svc["id"]] = "starting"
@@ -184,10 +184,10 @@ class ServiceManager:
         return results
 
     def stop_group(self, group):
-        """Stop all services in a group."""
+        """Stop all services in a group (case-insensitive)."""
         results = {}
         for svc in self._services.values():
-            if svc.get("group") == group and not svc.get("ghost"):
+            if svc.get("group", "").lower() == group.lower() and not svc.get("ghost"):
                 if svc.get("status") != "stopped":
                     self._kill(svc)
                     results[svc["id"]] = "stopped"

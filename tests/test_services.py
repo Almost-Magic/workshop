@@ -264,11 +264,11 @@ def test_command_ambiguous_match(client):
     """Beast: ambiguous query returns disambiguate with multiple matches."""
     resp = client.post(
         "/api/command",
-        data=json.dumps({"query": "ck"}),
+        data=json.dumps({"query": "ri"}),
         content_type="application/json",
     )
     data = resp.get_json()
-    # "ck" matches ck-writer and costanza (CK Swiss Army Knife) at minimum
+    # "ri" matches ripple-crm (Ripple) and costenza at minimum
     assert data["action"] == "disambiguate"
     assert len(data["matches"]) >= 2
 
