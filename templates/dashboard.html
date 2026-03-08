@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Workshop — AMTL</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1 class="topbar__title">The Workshop</h1>
+    <span class="topbar__subtitle">AMTL Service Registry</span>
+    <span class="topbar__version">v1.0.0</span>
+  </header>
+
+  <main class="grid-container">
+    {% for group_name, group_services in groups.items() %}
+    <section class="group">
+      <h2 class="group__title">{{ group_name | replace('-', ' ') | title }}</h2>
+      <div class="card-grid">
+        {% for svc in group_services %}
+        <div class="card {% if svc.ghost %}card--ghost{% endif %}">
+          <div class="card__header">
+            <span class="card__favicon" style="background: var(--accent);">{{ svc.favicon }}</span>
+            <div class="card__info">
+              <span class="card__name">{{ svc.name }}{% if svc.ghost %} ✦{% endif %}</span>
+              <span class="card__port">:{{ svc.port }}</span>
+            </div>
+            <span class="card__dot card__dot--{{ svc.status }}"></span>
+          </div>
+          <p class="card__desc">{{ svc.description }}</p>
+          {% if not svc.ghost %}
+          <div class="card__actions">
+            <button class="btn btn--start" data-id="{{ svc.id }}" onclick="startService('{{ svc.id }}')">Start</button>
+            <button class="btn btn--stop" data-id="{{ svc.id }}" onclick="stopService('{{ svc.id }}')">Stop</button>
+            <a class="btn btn--open" href="http://localhost:{{ svc.port }}" target="_blank">Open</a>
+          </div>
+          {% else %}
+          <div class="card__ghost-eta">{{ svc.ghost_eta or 'Planned' }}</div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endfor %}
+  </main>
+
+  <footer class="statusbar">
+    <span>{{ services | length }} services registered</span>
+    <span>·</span>
+    <span id="running-count">Checking…</span>
+  </footer>
+
+  <script>
+    async function refreshHealth() {
+      try {
+        const resp = await fetch('/api/health');
+        const data = await resp.json();
+        document.getElementById('running-count').textContent =
+          `${data.services_running} running / ${data.services_total} total`;
+      } catch (e) {
+        document.getElementById('running-count').textContent = 'API unreachable';
+      }
+    }
+
+    async function startService(id) {
+      await fetch(`/api/services/${id}/start`, { method: 'POST' });
+      setTimeout(refreshHealth, 1000);
+    }
+
+    async function stopService(id) {
+      await fetch(`/api/services/${id}/stop`, { method: 'POST' });
+      setTimeout(refreshHealth, 500);
+    }
+
+    refreshHealth();
+    setInterval(refreshHealth, 10000);
+  </script>
+</body>
+</html>

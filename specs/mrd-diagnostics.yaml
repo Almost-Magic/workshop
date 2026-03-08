@@ -1,0 +1,85 @@
+# MRD Diagnostics Block — The Workshop v1.0.0
+# AMTL-WKS-MRD-1.0
+#
+# Machine-Readable Diagnostics for automated compliance checking.
+# Read by Foreperson, Inspector, and CI/CD pipelines.
+
+diagnostics:
+  app:
+    id: workshop
+    name: The Workshop
+    version: "1.0.0"
+    spec: AMTL-WKS-TDD-1.0
+    port: 5003
+    host: 127.0.0.1
+    language: python
+    framework: flask
+    framework_version: "3.0.2"
+
+  registry:
+    format: yaml
+    path: registry.yaml
+    total_services: 24
+    active_services: 20
+    ghost_services: 4
+    groups:
+      - core
+      - ck-personal
+      - ck-business
+      - intelligence
+      - marketing
+      - operations
+      - ghost
+
+  storage:
+    incidents_db: data/incidents.db
+    heartbeat_db: data/heartbeat.db
+    format: sqlite3
+
+  testing:
+    framework: pytest
+    total_tests: 116
+    test_files: 8
+    lint: flake8
+    lint_warnings: 0
+    coverage_target: ">80%"
+
+  api_endpoints:
+    total: 16
+    blueprints:
+      - health
+      - services
+      - web
+      - incidents
+      - briefing
+      - help
+      - constellation
+
+  self_healing:
+    tiers: 3
+    tier_1: simple_restart
+    tier_2: deep_restart_with_deps
+    tier_3: full_recovery
+    escalation: elaine
+
+  integrations:
+    elaine: http://127.0.0.1:5000
+    supervisor: http://127.0.0.1:9000
+    foreperson: http://127.0.0.1:9100
+
+  decisions:
+    DEC-005: "Port 5003 sacred"
+    DEC-006: "Port 5002=Learning Assistant, Port 5009=Identity Atlas"
+    DEC-011: "Command palette via Space or Ctrl+K"
+    DEC-012: "Briefing auto-dismiss at 6 seconds"
+
+  build_phases:
+    phase_0: complete  # Skeleton, venv, nssm
+    phase_1: complete  # Registry, API, dashboard
+    phase_2: complete  # Incidents, self-healer
+    phase_3: complete  # Heartbeat, resources
+    phase_4: complete  # Morning briefing
+    phase_5: complete  # Electron desktop rebuild
+    phase_6: complete  # Constellation view
+    phase_7: complete  # Context-aware help
+    phase_8: complete  # Final verification

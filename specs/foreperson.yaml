@@ -1,0 +1,78 @@
+# Foreperson Health Spec — The Workshop v1.0.0
+# AMTL-WKS-FP-1.0
+#
+# This file tells Foreperson how to verify The Workshop is healthy.
+# Foreperson reads this on its audit cycle and reports to ELAINE.
+
+service:
+  id: workshop
+  name: The Workshop
+  version: "1.0.0"
+  port: 5003
+  host: 127.0.0.1
+
+health_checks:
+  - name: api_alive
+    method: GET
+    url: http://127.0.0.1:5003/api/health
+    expect_status: 200
+    expect_json:
+      status: ok
+    timeout_ms: 3000
+
+  - name: services_endpoint
+    method: GET
+    url: http://127.0.0.1:5003/api/services
+    expect_status: 200
+    expect_type: array
+    expect_min_length: 20
+    timeout_ms: 5000
+
+  - name: constellation_endpoint
+    method: GET
+    url: http://127.0.0.1:5003/api/constellation
+    expect_status: 200
+    expect_json_keys: [nodes, edges]
+    timeout_ms: 5000
+
+  - name: help_endpoint
+    method: GET
+    url: http://127.0.0.1:5003/api/help/dashboard
+    expect_status: 200
+    expect_json_keys: [howItWorks, quickActions, shortcuts, tips, firstVisitTooltip]
+    timeout_ms: 3000
+
+  - name: briefing_endpoint
+    method: GET
+    url: http://127.0.0.1:5003/api/briefing
+    expect_status: 200
+    expect_json_keys: [greeting, summary]
+    timeout_ms: 5000
+
+  - name: incidents_endpoint
+    method: GET
+    url: http://127.0.0.1:5003/api/incidents
+    expect_status: 200
+    expect_type: array
+    timeout_ms: 3000
+
+  - name: command_palette
+    method: POST
+    url: http://127.0.0.1:5003/api/command
+    body: '{"query": "health"}'
+    expect_status: 200
+    expect_json_keys: [action, display]
+    timeout_ms: 3000
+
+quality_gates:
+  min_test_count: 100
+  max_flake8_warnings: 0
+  registry_format: yaml
+  registry_app_count: 24
+  port_sacred: 5003
+
+escalation:
+  on_failure: notify_elaine
+  elaine_endpoint: http://127.0.0.1:5000/api/notify
+  severity: high
+  message: "Workshop health check failed — ecosystem nerve centre is down."
