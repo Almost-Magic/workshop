@@ -1,3 +1,4 @@
+# Author: Mani Padisetti
 """The Workshop — AMTL Central Service Registry & Launcher.
 
 Flask application factory lives here so the ``app`` package is

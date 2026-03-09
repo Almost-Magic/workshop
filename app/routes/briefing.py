@@ -1,3 +1,4 @@
+# Author: Mani Padisetti
 """Morning Briefing API route.
 
 Endpoint:

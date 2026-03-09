@@ -1,3 +1,4 @@
+# Author: Mani Padisetti
 """Service registry API routes.
 
 Endpoints:

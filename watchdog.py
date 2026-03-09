@@ -1,3 +1,4 @@
+# Author: Mani Padisetti
 """Meta-Watchdog — checks Workshop API and Supervisor every 30 seconds.
 
 If either service is unreachable, attempts a restart via nssm.

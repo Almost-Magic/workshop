@@ -1,3 +1,4 @@
+# Author: Mani Padisetti
 """Resource Monitor — polls Supervisor for live CPU/RAM/VRAM data.
 
 Fetches resource data from Supervisor (:9000) every 30 seconds and

@@ -1,3 +1,4 @@
+# Author: Mani Padisetti
 """Heartbeat Engine — 24-hour uptime sparkline data.
 
 Stores one row per (app_id, hour) in SQLite.  Each row records whether

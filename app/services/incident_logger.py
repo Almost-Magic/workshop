@@ -1,3 +1,4 @@
+# Author: Mani Padisetti
 """Incident Logger — structured event log backed by SQLite.
 
 Every start, stop, crash, restart, and health degradation event is

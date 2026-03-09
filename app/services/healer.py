@@ -1,3 +1,4 @@
+# Author: Mani Padisetti
 """Self-Healer — 3-tier automatic recovery for failed services.
 
 When a health check fails the healer attempts increasingly aggressive

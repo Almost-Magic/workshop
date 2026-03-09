@@ -1,3 +1,4 @@
+# Author: Mani Padisetti
 """WSGI entry point for The Workshop Flask app."""
 
 from app import create_app

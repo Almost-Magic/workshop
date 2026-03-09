@@ -1,3 +1,4 @@
+# Author: Mani Padisetti
 """
 Workshop — Central Service Registry & Launcher
 Port 5001 | Almost Magic Tech Lab

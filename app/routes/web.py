@@ -1,3 +1,4 @@
+# Author: Mani Padisetti
 """Browser fallback web UI routes.
 
 Serves the V2 Workshop dashboard at / (which becomes /workshop/

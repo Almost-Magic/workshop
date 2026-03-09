@@ -1,3 +1,4 @@
+# Author: Mani Padisetti
 """Health check endpoints for The Workshop API."""
 
 import time

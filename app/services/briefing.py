@@ -1,3 +1,4 @@
+# Author: Mani Padisetti
 """Briefing Service — aggregates system state into a Morning Briefing.
 
 The briefing pulls:

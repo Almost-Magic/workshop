@@ -1,82 +1,150 @@
-# The Workshop — AMTL Central Service Registry & Launcher
+# The Workshop V2 — AMTL Ecosystem Registry & Dashboard
 
 **Port 5001** | Almost Magic Tech Lab
 
-The Workshop is App 0 — the homepage and launchpad for the entire AMTL ecosystem. It provides a visual dashboard showing every AMTL app with live health status, and serves as the central service registry.
+The Workshop is App 0 — the homepage and command centre for the entire AMTL ecosystem. It provides a status-first sidebar dashboard showing all 55 AMTL apps with live health, filterable by status and category, and serves as the central service registry and launcher.
 
 ## Features
 
-- **App Launcher Grid** — Cards for all 12 AMTL apps with live/down/coming soon status
-- **Ecosystem Health Strip** — Running/down/not built counts, auto-refreshes every 30 seconds
-- **ELAINE Status Widget** — Green/red dot showing ELAINE availability, links to ELAINE docs
-- **Quick Actions** — Start All (triggers start-all.sh), View Logs (tmux output per app)
-- **Dark/Light Theme** — AMTL Midnight (#0A0E14) default, toggle in header
-- **Service Registry API** — JSON endpoints for all service metadata and health
+- **55-App Ecosystem Registry** — Every AMTL app tracked with status, category, test count, and spec coverage
+- **Status-First Sidebar** — Filter by Live (25), Building (5), Planned (25), or by category
+- **Six Categories** — Internal (26), Open Source (7), Commercial (4), Consulting (4), Content (6), Infra (8)
+- **Live Health Checks** — Background polling with heartbeat history and resource monitoring
+- **Service Manager** — Start, stop, restart individual services or groups
+- **Command Bar** — Fuzzy-match services by name or port number
+- **Incident Tracking** — Log and annotate service incidents
+- **Constellation View** — Visual map of service relationships
+- **Context-Aware Help** — Per-screen help with shortcuts, tips, and tooltips
+- **Morning Briefing** — Daily ecosystem status summary
+- **Dark/Light Theme** — AMTL Midnight (#0A0E14) default, toggle in header with localStorage persistence
+- **Self-Registration API** — Apps can register themselves dynamically
 
 ## Quick Start
 
 ```bash
-cd ~/CK/Elaine/workshop
-uvicorn app:app --host 0.0.0.0 --port 5001 --reload
+cd ~/workshop
+source .venv/bin/activate
+gunicorn wsgi:application --bind 0.0.0.0:5001 --workers 2
 ```
 
-Or via tmux (production):
+Production (systemd):
 ```bash
-tmux new-session -d -s workshop
-tmux send-keys -t workshop "cd ~/CK/Elaine/workshop && uvicorn app:app --host 0.0.0.0 --port 5001 --reload" Enter
+sudo systemctl start workshop
+sudo systemctl status workshop
 ```
 
 ## API Endpoints
 
+All routes are served under the `/workshop` subpath for NGINX reverse proxy compliance.
+
+### Registry API (V2)
+
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/health` | Health check |
-| GET | `/api/health` | Health check (alias) |
-| GET | `/` | Launcher dashboard (HTML) |
-| GET | `/dashboard` | Launcher dashboard (alias) |
-| GET | `/api/services` | All services with live health status |
-| GET | `/api/services/{id}/health` | Single service health check |
-| POST | `/api/start-all` | Trigger start-all.sh |
-| GET | `/api/logs/{id}` | Recent tmux output for a service |
+| GET | `/workshop/api/registry` | All 55 ecosystem items (filterable) |
+| GET | `/workshop/api/registry?status=live` | Filter by status: live, building, planned |
+| GET | `/workshop/api/registry?cat=internal` | Filter by category: internal, opensource, commercial, consulting, content, infra |
+| GET | `/workshop/api/registry?status=live&cat=internal` | Combined filters |
+| GET | `/workshop/api/health/all` | Aggregate health check across all live services |
+| POST | `/workshop/api/apps/register` | Register a new app dynamically |
 
-## Registered Apps
+### Service Manager API
 
-| App | ID | Port | Built |
-|-----|----|------|-------|
-| ELAINE | elaine | 5000 | Yes |
-| Workshop | workshop | 5001 | Yes |
-| Baldrick | baldrick | 5050 | Yes |
-| Quimby | quimby | 5101 | Yes |
-| Costanza | costanza | 5201 | Yes |
-| Peterman | peterman | 5008 | Yes |
-| CK Writer | ckwriter | 5004 | Yes |
-| Sophia | sophia | 5200 | Yes |
-| Identity Atlas | atlas | 5009 | No |
-| Digital Sentinel | sentinel | 5300 | No |
-| CK Creative Studio | studio | 5400 | No |
-| Genie | genie | 5600 | No |
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/workshop/api/services` | All services with live health, heartbeat, resources |
+| GET | `/workshop/api/services/<id>` | Single service detail |
+| POST | `/workshop/api/services/<id>/start` | Start a service |
+| POST | `/workshop/api/services/<id>/stop` | Stop a service |
+| POST | `/workshop/api/services/<id>/restart` | Restart a service |
+| POST | `/workshop/api/groups/<group>/start` | Start all services in a group |
+| POST | `/workshop/api/groups/<group>/stop` | Stop all services in a group |
+| POST | `/workshop/api/command` | Fuzzy-match command bar |
+
+### Other Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/workshop/` | Dashboard (HTML) |
+| GET | `/workshop/health` | Health check shortcut |
+| GET | `/workshop/api/health` | Health check |
+| GET | `/workshop/api/briefing` | Morning briefing |
+| GET | `/workshop/api/incidents` | Incident log |
+| GET | `/workshop/api/constellation` | Service relationship map |
+| GET | `/workshop/api/help/<screen_id>` | Context-aware help |
 
 ## Testing
 
 ```bash
-cd ~/CK/Elaine/workshop
-python3 -m pytest tests/ -v
+cd ~/workshop
+source .venv/bin/activate
+python -m pytest tests/ -v --ignore=tests/test_workshop.py --ignore=tests/test_beast.py
 ```
 
-30 tests covering health endpoints, dashboard rendering, registry validation, service API, and log retrieval.
+164+ tests across 12 test files covering:
+
+| File | Tests | Coverage |
+|------|-------|----------|
+| `test_registry.py` | 34 | Registry API, filters, UI elements, subpath compliance, data integrity |
+| `test_services.py` | 28 | Service CRUD, groups, command bar, edge cases |
+| `test_help.py` | 30 | Context-aware help for all 4 screens |
+| `test_incidents.py` | 17 | Incident logging and annotation |
+| `test_briefing.py` | 12 | Morning briefing generation |
+| `test_constellation.py` | 10 | Constellation view data |
+| `test_health.py` | 7 | Health endpoints |
+| `test_integration.py` | 5 | Heartbeat, resources, cross-service |
+| `test_healer.py` | -- | Self-healing watchdog |
+| `e2e/test_workshop_e2e.py` | 5 | Playwright browser tests (sidebar, filters, search, theme) |
+
+### End-to-End Tests (Playwright)
+
+```bash
+cd ~/workshop
+python -m pytest tests/e2e/ -v
+```
+
+Requires the Workshop service running on port 5001.
 
 ## Architecture
 
-- **Framework**: FastAPI (async)
-- **Frontend**: Self-contained HTML/CSS/JS (no build step, no external dependencies)
-- **Health checking**: httpx with 8-second timeout, concurrent via asyncio.gather
-- **Fonts**: DM Serif Display, DM Sans, JetBrains Mono (Google Fonts CDN)
-- **Theme**: AMTL Midnight dark mode default, light mode toggle with localStorage persistence
-- **Logs**: Reads tmux capture-pane output for each service
-- **Start All**: Triggers `/home/mani/amtl/start-all.sh` via subprocess
+- **Framework**: Flask with application factory pattern (`create_app`)
+- **WSGI Server**: Gunicorn (2 workers, 30s timeout)
+- **Blueprints**: health, services, web, incidents, briefing, help, constellation, registry
+- **Registry**: `data/registry.json` (55 items, JSON)
+- **Service Config**: `data/services.yaml` (24 managed services)
+- **Frontend**: Server-rendered Jinja2 template with client-side JS fetching from API
+- **Fonts**: Lora (headings), Inter 300 (body), JetBrains Mono (data/ports) via Google Fonts CDN
+- **Theme**: AMTL Midnight dark mode default, CSS custom properties, localStorage persistence
+- **Health Checking**: Background thread polling services every 30s
+- **Subpath**: All routes under `/workshop/` prefix for NGINX compliance
 
 ## Browser Access
 
-Via Nginx reverse proxy: `http://amtl/workshop/`
+Via NGINX reverse proxy: `http://amtl/workshop/`
 
-The Workshop is also the default route — `http://amtl/` loads the Workshop dashboard.
+Root redirect: `http://amtl/` loads The Workshop dashboard.
+
+## Registry Data Format
+
+Each item in `data/registry.json`:
+
+```json
+{
+  "id": "elaine",
+  "name": "ELAINE",
+  "emoji": "\ud83e\udde0",
+  "port": "5000",
+  "description": "AI Chief of Staff",
+  "category": "internal",
+  "status": "live",
+  "tests": "783",
+  "tests_verified": true,
+  "has_spec": true,
+  "github_repo": "Almost-Magic/elaine"
+}
+```
+
+### Valid Values
+
+- **status**: `live`, `building`, `planned`
+- **category**: `internal`, `opensource`, `commercial`, `consulting`, `content`, `infra`

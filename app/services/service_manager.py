@@ -1,3 +1,4 @@
+# Author: Mani Padisetti
 """Service Manager — loads registry.yaml and manages all AMTL services.
 
 Responsibilities:

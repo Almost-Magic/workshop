@@ -1,3 +1,4 @@
+# Author: Mani Padisetti
 """Workshop configuration — loads from environment variables."""
 
 import os

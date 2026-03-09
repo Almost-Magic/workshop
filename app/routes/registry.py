@@ -1,3 +1,4 @@
+# Author: Mani Padisetti
 """Registry API routes for V2 Workshop.
 
 Endpoints:
