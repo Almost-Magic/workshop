@@ -1,80 +1,336 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-AU" data-theme="dark">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>The Workshop — AMTL</title>
-  <link rel="stylesheet" href="/static/style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Workshop — AMTL Mission Control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&family=Lora:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/workshop/static/style.css">
 </head>
 <body>
-  <header class="topbar">
-    <h1 class="topbar__title">The Workshop</h1>
-    <span class="topbar__subtitle">AMTL Service Registry</span>
-    <span class="topbar__version">v1.0.0</span>
-  </header>
 
-  <main class="grid-container">
-    {% for group_name, group_services in groups.items() %}
-    <section class="group">
-      <h2 class="group__title">{{ group_name | replace('-', ' ') | title }}</h2>
-      <div class="card-grid">
-        {% for svc in group_services %}
-        <div class="card {% if svc.ghost %}card--ghost{% endif %}">
-          <div class="card__header">
-            <span class="card__favicon" style="background: var(--accent);">{{ svc.favicon }}</span>
-            <div class="card__info">
-              <span class="card__name">{{ svc.name }}{% if svc.ghost %} ✦{% endif %}</span>
-              <span class="card__port">:{{ svc.port }}</span>
-            </div>
-            <span class="card__dot card__dot--{{ svc.status }}"></span>
-          </div>
-          <p class="card__desc">{{ svc.description }}</p>
-          {% if not svc.ghost %}
-          <div class="card__actions">
-            <button class="btn btn--start" data-id="{{ svc.id }}" onclick="startService('{{ svc.id }}')">Start</button>
-            <button class="btn btn--stop" data-id="{{ svc.id }}" onclick="stopService('{{ svc.id }}')">Stop</button>
-            <a class="btn btn--open" href="http://localhost:{{ svc.port }}" target="_blank">Open</a>
-          </div>
-          {% else %}
-          <div class="card__ghost-eta">{{ svc.ghost_eta or 'Planned' }}</div>
-          {% endif %}
-        </div>
-        {% endfor %}
+<!-- Topbar -->
+<header class="topbar" data-testid="topbar">
+  <div class="topbar__left">
+    <span class="topbar__logo">&#9881; The Workshop</span>
+  </div>
+  <div class="topbar__centre">
+    <div class="search-band">
+      <input type="text" class="search-input" data-testid="search-input"
+             placeholder="Search apps... &#8984;K" id="searchInput">
+      <div class="filter-chips" data-testid="filter-chips">
+        <button class="chip" data-status="live">Live</button>
+        <button class="chip" data-status="building">Building</button>
+        <button class="chip" data-status="planned">Planned</button>
       </div>
-    </section>
-    {% endfor %}
+    </div>
+  </div>
+  <div class="topbar__right">
+    <span class="status-pills" id="statusPills"></span>
+    <span class="topbar__clock" id="clock"></span>
+    <button class="theme-toggle" data-testid="theme-toggle" id="themeToggle"
+            title="Toggle dark/light theme">&#9790;</button>
+  </div>
+</header>
+
+<!-- Layout -->
+<div class="layout">
+  <!-- Sidebar -->
+  <nav class="sidebar" data-testid="sidebar-nav">
+    <div class="sidebar__section">
+      <div class="sidebar__label">By Status</div>
+      <button class="sidebar__item" data-filter="status" data-value="live">
+        <span class="dot dot--live"></span>
+        <span>Live &amp; Running</span>
+        <span class="sidebar__count" id="countLive"></span>
+      </button>
+      <button class="sidebar__item" data-filter="status" data-value="building">
+        <span class="dot dot--building"></span>
+        <span>In Build</span>
+        <span class="sidebar__count" id="countBuilding"></span>
+      </button>
+      <button class="sidebar__item" data-filter="status" data-value="planned">
+        <span class="dot dot--planned"></span>
+        <span>Planned</span>
+        <span class="sidebar__count" id="countPlanned"></span>
+      </button>
+    </div>
+
+    <div class="sidebar__section">
+      <div class="sidebar__label">By Category</div>
+      <button class="sidebar__item" data-filter="cat" data-value="internal">
+        <span class="sidebar__icon">&#128230;</span>
+        <span>Internal Apps</span>
+        <span class="sidebar__count" id="countInternal"></span>
+      </button>
+      <button class="sidebar__item" data-filter="cat" data-value="opensource">
+        <span class="sidebar__icon">&#127760;</span>
+        <span>Open Source</span>
+        <span class="sidebar__count" id="countOpensource"></span>
+      </button>
+      <button class="sidebar__item" data-filter="cat" data-value="commercial">
+        <span class="sidebar__icon">&#128188;</span>
+        <span>Commercial</span>
+        <span class="sidebar__count" id="countCommercial"></span>
+      </button>
+      <button class="sidebar__item" data-filter="cat" data-value="consulting">
+        <span class="sidebar__icon">&#127891;</span>
+        <span>Consulting</span>
+        <span class="sidebar__count" id="countConsulting"></span>
+      </button>
+      <button class="sidebar__item" data-filter="cat" data-value="content">
+        <span class="sidebar__icon">&#128196;</span>
+        <span>Content</span>
+        <span class="sidebar__count" id="countContent"></span>
+      </button>
+      <button class="sidebar__item" data-filter="cat" data-value="infra">
+        <span class="sidebar__icon">&#9881;</span>
+        <span>Infra</span>
+        <span class="sidebar__count" id="countInfra"></span>
+      </button>
+    </div>
+
+    <div class="sidebar__section">
+      <div class="sidebar__label">Flags</div>
+      <button class="sidebar__item" data-filter="flag" data-value="unverified">
+        <span class="sidebar__icon">&#9888;</span>
+        <span>Unverified Tests</span>
+        <span class="sidebar__count" id="countUnverified"></span>
+      </button>
+      <button class="sidebar__item" data-filter="flag" data-value="nospec">
+        <span class="sidebar__icon">&#10060;</span>
+        <span>No Spec</span>
+        <span class="sidebar__count" id="countNospec"></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="card-grid" id="cardGrid"></div>
+    <div class="empty-state" id="emptyState" style="display:none;">
+      No apps match the current filters.
+    </div>
   </main>
+</div>
 
-  <footer class="statusbar">
-    <span>{{ services | length }} services registered</span>
-    <span>·</span>
-    <span id="running-count">Checking…</span>
-  </footer>
+<script>
+let allItems = [];
+let activeFilter = null;
+let activeFilterValue = null;
+let searchQuery = '';
 
-  <script>
-    async function refreshHealth() {
-      try {
-        const resp = await fetch('/api/health');
-        const data = await resp.json();
-        document.getElementById('running-count').textContent =
-          `${data.services_running} running / ${data.services_total} total`;
-      } catch (e) {
-        document.getElementById('running-count').textContent = 'API unreachable';
-      }
+// ── Fetch registry data ─────────────────────────────────────────────────
+async function fetchRegistry() {
+  try {
+    const resp = await fetch('/workshop/api/registry');
+    allItems = await resp.json();
+    updateCounts();
+    renderCards();
+  } catch (e) {
+    console.error('Failed to fetch registry:', e);
+  }
+}
+
+// ── Counts ──────────────────────────────────────────────────────────────
+function updateCounts() {
+  const live = allItems.filter(i => i.status === 'live').length;
+  const building = allItems.filter(i => i.status === 'building').length;
+  const planned = allItems.filter(i => i.status === 'planned').length;
+
+  document.getElementById('countLive').textContent = `(${live})`;
+  document.getElementById('countBuilding').textContent = `(${building})`;
+  document.getElementById('countPlanned').textContent = `(${planned})`;
+
+  document.getElementById('countInternal').textContent =
+    `(${allItems.filter(i => i.category === 'internal').length})`;
+  document.getElementById('countOpensource').textContent =
+    `(${allItems.filter(i => i.category === 'opensource').length})`;
+  document.getElementById('countCommercial').textContent =
+    `(${allItems.filter(i => i.category === 'commercial').length})`;
+  document.getElementById('countConsulting').textContent =
+    `(${allItems.filter(i => i.category === 'consulting').length})`;
+  document.getElementById('countContent').textContent =
+    `(${allItems.filter(i => i.category === 'content').length})`;
+  document.getElementById('countInfra').textContent =
+    `(${allItems.filter(i => i.category === 'infra').length})`;
+
+  document.getElementById('countUnverified').textContent =
+    `(${allItems.filter(i => !i.tests_verified && i.tests !== null).length})`;
+  document.getElementById('countNospec').textContent =
+    `(${allItems.filter(i => !i.has_spec).length})`;
+
+  document.getElementById('statusPills').textContent =
+    `${live} Live \u00b7 ${building} Building \u00b7 ${planned} Planned`;
+}
+
+// ── Filter logic ────────────────────────────────────────────────────────
+function getFilteredItems() {
+  let items = allItems;
+
+  if (activeFilter === 'status') {
+    items = items.filter(i => i.status === activeFilterValue);
+  } else if (activeFilter === 'cat') {
+    items = items.filter(i => i.category === activeFilterValue);
+  } else if (activeFilter === 'flag') {
+    if (activeFilterValue === 'unverified') {
+      items = items.filter(i => !i.tests_verified && i.tests !== null);
+    } else if (activeFilterValue === 'nospec') {
+      items = items.filter(i => !i.has_spec);
     }
+  }
 
-    async function startService(id) {
-      await fetch(`/api/services/${id}/start`, { method: 'POST' });
-      setTimeout(refreshHealth, 1000);
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase();
+    items = items.filter(i =>
+      i.name.toLowerCase().includes(q) ||
+      i.description.toLowerCase().includes(q)
+    );
+  }
+
+  return items;
+}
+
+// ── Render cards ────────────────────────────────────────────────────────
+function renderCards() {
+  const grid = document.getElementById('cardGrid');
+  const empty = document.getElementById('emptyState');
+  const items = getFilteredItems();
+
+  if (items.length === 0) {
+    grid.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  grid.innerHTML = items.map(item => {
+    const isPlanned = item.status === 'planned';
+    const hasPort = item.port && item.port !== 'TBD' && item.port !== null;
+    const isUnverified = !item.tests_verified && item.tests !== null;
+    const dotClass = item.status === 'live' ? 'dot--live'
+                   : item.status === 'building' ? 'dot--building'
+                   : 'dot--planned';
+
+    const portHtml = hasPort
+      ? `<span class="card__port">:${item.port}</span>` : '';
+    const testsHtml = item.tests
+      ? `<span class="card__tests">${item.tests} tests</span>` : '';
+    const unverifiedHtml = isUnverified
+      ? `<span class="card__unverified" data-testid="unverified-badge">&#9888; unverified</span>` : '';
+
+    const clickUrl = (!isPlanned && hasPort)
+      ? `http://localhost:${item.port}/` : '';
+    const clickAttr = clickUrl
+      ? `onclick="window.open('${clickUrl}','_blank')" style="cursor:pointer;"` : '';
+
+    return `
+      <div class="card ${isPlanned ? 'card--planned' : ''}"
+           data-testid="app-card" ${clickAttr}>
+        <div class="card__emoji">${item.emoji}</div>
+        <div class="card__header">
+          <span class="card__name">${item.name}</span>
+          <span class="dot ${dotClass}"></span>
+        </div>
+        <div class="card__desc">${item.description}</div>
+        <div class="card__footer">
+          ${portHtml}${testsHtml}${unverifiedHtml}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── Sidebar click handlers ──────────────────────────────────────────────
+document.querySelectorAll('.sidebar__item').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const filter = btn.dataset.filter;
+    const value = btn.dataset.value;
+
+    // Toggle off if already active
+    if (activeFilter === filter && activeFilterValue === value) {
+      activeFilter = null;
+      activeFilterValue = null;
+      btn.classList.remove('active');
+    } else {
+      // Remove active from all
+      document.querySelectorAll('.sidebar__item').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      activeFilter = filter;
+      activeFilterValue = value;
+      btn.classList.add('active');
     }
+    renderCards();
+  });
+});
 
-    async function stopService(id) {
-      await fetch(`/api/services/${id}/stop`, { method: 'POST' });
-      setTimeout(refreshHealth, 500);
+// ── Filter chips ────────────────────────────────────────────────────────
+document.querySelectorAll('.chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    const value = chip.dataset.status;
+
+    if (activeFilter === 'status' && activeFilterValue === value) {
+      activeFilter = null;
+      activeFilterValue = null;
+      chip.classList.remove('active');
+    } else {
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      document.querySelectorAll('.sidebar__item').forEach(b => b.classList.remove('active'));
+      activeFilter = 'status';
+      activeFilterValue = value;
+      chip.classList.add('active');
     }
+    renderCards();
+  });
+});
 
-    refreshHealth();
-    setInterval(refreshHealth, 10000);
-  </script>
+// ── Search ──────────────────────────────────────────────────────────────
+document.getElementById('searchInput').addEventListener('input', (e) => {
+  searchQuery = e.target.value;
+  renderCards();
+});
+
+// Cmd+K shortcut
+document.addEventListener('keydown', (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault();
+    document.getElementById('searchInput').focus();
+  }
+});
+
+// ── Clock ───────────────────────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: false });
+}
+updateClock();
+setInterval(updateClock, 60000);
+
+// ── Theme toggle ────────────────────────────────────────────────────────
+const themeBtn = document.getElementById('themeToggle');
+const savedTheme = localStorage.getItem('workshop-theme');
+if (savedTheme === 'light') {
+  document.documentElement.setAttribute('data-theme', 'light');
+  themeBtn.innerHTML = '&#9788;';
+}
+
+themeBtn.addEventListener('click', () => {
+  const current = document.documentElement.getAttribute('data-theme');
+  if (current === 'light') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    localStorage.setItem('workshop-theme', 'dark');
+    themeBtn.innerHTML = '&#9790;';
+  } else {
+    document.documentElement.setAttribute('data-theme', 'light');
+    localStorage.setItem('workshop-theme', 'light');
+    themeBtn.innerHTML = '&#9788;';
+  }
+});
+
+// ── Init ────────────────────────────────────────────────────────────────
+fetchRegistry();
+</script>
 </body>
 </html>
