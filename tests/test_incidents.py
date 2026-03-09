@@ -120,7 +120,7 @@ def test_log_event_with_all_fields():
 
 def test_api_incidents_empty(client):
     """4% edge: /api/incidents returns empty list when no incidents."""
-    resp = client.get("/api/incidents")
+    resp = client.get("/workshop/api/incidents")
     assert resp.status_code == 200
     assert resp.get_json() == []
 
@@ -128,7 +128,7 @@ def test_api_incidents_empty(client):
 def test_api_incidents_returns_data(client):
     """Beast: /api/incidents returns logged incidents."""
     incident_logger.log_event("elaine", "start")
-    resp = client.get("/api/incidents")
+    resp = client.get("/workshop/api/incidents")
     data = resp.get_json()
     assert len(data) == 1
     assert data[0]["app_id"] == "elaine"
@@ -138,7 +138,7 @@ def test_api_incidents_filter_by_app(client):
     """Beast: ?app=elaine filters correctly."""
     incident_logger.log_event("elaine", "start")
     incident_logger.log_event("supervisor", "start")
-    resp = client.get("/api/incidents?app=elaine")
+    resp = client.get("/workshop/api/incidents?app=elaine")
     data = resp.get_json()
     assert len(data) == 1
 
@@ -147,7 +147,7 @@ def test_api_incidents_limit(client):
     """Beast: ?limit=2 caps results."""
     for _ in range(5):
         incident_logger.log_event("elaine", "start")
-    resp = client.get("/api/incidents?limit=2")
+    resp = client.get("/workshop/api/incidents?limit=2")
     data = resp.get_json()
     assert len(data) == 2
 
@@ -156,7 +156,7 @@ def test_api_annotate_success(client):
     """Beast: annotating via API works."""
     inc = incident_logger.log_event("elaine", "crash")
     resp = client.post(
-        f"/api/incidents/{inc['id']}/annotate",
+        f"/workshop/api/incidents/{inc['id']}/annotate",
         data=json.dumps({"note": "Fixed port conflict."}),
         content_type="application/json",
     )
@@ -169,7 +169,7 @@ def test_api_annotate_empty_note_400(client):
     """4% edge: empty note returns 400."""
     inc = incident_logger.log_event("elaine", "crash")
     resp = client.post(
-        f"/api/incidents/{inc['id']}/annotate",
+        f"/workshop/api/incidents/{inc['id']}/annotate",
         data=json.dumps({"note": ""}),
         content_type="application/json",
     )
@@ -179,7 +179,7 @@ def test_api_annotate_empty_note_400(client):
 def test_api_annotate_nonexistent_404(client):
     """4% edge: annotating a non-existent incident returns 404."""
     resp = client.post(
-        "/api/incidents/INC-9999/annotate",
+        "/workshop/api/incidents/INC-9999/annotate",
         data=json.dumps({"note": "test"}),
         content_type="application/json",
     )

@@ -20,7 +20,7 @@ def client():
 
 def test_services_response_includes_heartbeat(client):
     """Integration: /api/services response includes heartbeat array."""
-    resp = client.get("/api/services")
+    resp = client.get("/workshop/api/services")
     data = resp.get_json()
     for svc in data:
         assert "heartbeat" in svc
@@ -30,7 +30,7 @@ def test_services_response_includes_heartbeat(client):
 
 def test_services_response_includes_resources(client):
     """Integration: /api/services response includes resources dict."""
-    resp = client.get("/api/services")
+    resp = client.get("/workshop/api/services")
     data = resp.get_json()
     for svc in data:
         assert "resources" in svc

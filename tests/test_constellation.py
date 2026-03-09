@@ -25,23 +25,23 @@ class TestConstellationAPI:
     """GET /api/constellation."""
 
     def test_returns_200(self, client):
-        resp = client.get("/api/constellation")
+        resp = client.get("/workshop/api/constellation")
         assert resp.status_code == 200
 
     def test_contains_nodes_and_edges(self, client):
-        data = client.get("/api/constellation").get_json()
+        data = client.get("/workshop/api/constellation").get_json()
         assert "nodes" in data
         assert "edges" in data
         assert isinstance(data["nodes"], list)
         assert isinstance(data["edges"], list)
 
     def test_node_count_matches_registry(self, client):
-        data = client.get("/api/constellation").get_json()
-        services = client.get("/api/services").get_json()
+        data = client.get("/workshop/api/constellation").get_json()
+        services = client.get("/workshop/api/services").get_json()
         assert len(data["nodes"]) == len(services)
 
     def test_node_has_required_fields(self, client):
-        data = client.get("/api/constellation").get_json()
+        data = client.get("/workshop/api/constellation").get_json()
         required = {
             "id", "name", "group", "port", "status",
             "ghost", "description", "favicon", "dependents",
@@ -53,18 +53,18 @@ class TestConstellationAPI:
             )
 
     def test_ghost_nodes_flagged(self, client):
-        data = client.get("/api/constellation").get_json()
+        data = client.get("/workshop/api/constellation").get_json()
         ghosts = [n for n in data["nodes"] if n["ghost"]]
         assert len(ghosts) >= 4  # sophia, amtl-tts, dhamma-mirror, after-i-go
 
     def test_ghost_nodes_have_eta(self, client):
-        data = client.get("/api/constellation").get_json()
+        data = client.get("/workshop/api/constellation").get_json()
         ghosts = [n for n in data["nodes"] if n["ghost"]]
         for g in ghosts:
             assert g.get("ghost_eta"), f"Ghost {g['id']} has no ETA"
 
     def test_edges_from_dependencies(self, client):
-        data = client.get("/api/constellation").get_json()
+        data = client.get("/workshop/api/constellation").get_json()
         edges = data["edges"]
         # foreperson depends on supervisor
         dep_edge = [
@@ -75,7 +75,7 @@ class TestConstellationAPI:
         assert dep_edge[0]["type"] == "hard"
 
     def test_inspector_depends_on_foreperson(self, client):
-        data = client.get("/api/constellation").get_json()
+        data = client.get("/workshop/api/constellation").get_json()
         edges = data["edges"]
         dep = [
             e for e in edges
@@ -84,13 +84,13 @@ class TestConstellationAPI:
         assert len(dep) == 1
 
     def test_dependents_count(self, client):
-        data = client.get("/api/constellation").get_json()
+        data = client.get("/workshop/api/constellation").get_json()
         # Supervisor has at least 2 dependents: foreperson, genie
         sup = next(n for n in data["nodes"] if n["id"] == "supervisor")
         assert sup["dependents"] >= 2
 
     def test_services_with_no_deps_have_no_incoming_edges(self, client):
-        data = client.get("/api/constellation").get_json()
+        data = client.get("/workshop/api/constellation").get_json()
         targets = {e["target"] for e in data["edges"]}
         elaine = next(n for n in data["nodes"] if n["id"] == "elaine")
         assert elaine["id"] not in targets
