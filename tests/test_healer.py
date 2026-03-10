@@ -1,3 +1,4 @@
+# Author: Mani Padisetti
 """Beast + Edge-case tests for the SelfHealer.
 
 Tests verify:

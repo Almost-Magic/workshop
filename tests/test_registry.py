@@ -1,3 +1,4 @@
+# Author: Mani Padisetti
 """Beast tests for Workshop V2 Registry API and UI elements.
 
 Tests cover:

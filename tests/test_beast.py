@@ -1,3 +1,4 @@
+# Author: Mani Padisetti
 """Beast Tests — Workshop FastAPI v2.0.
 
 Unit/integration tests using httpx AsyncClient against the ASGI app.

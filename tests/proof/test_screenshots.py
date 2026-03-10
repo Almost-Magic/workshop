@@ -1,3 +1,4 @@
+# Author: Mani Padisetti
 """Proof/Playwright screenshot tests — AMTL-WKS-BLD-1.0 §8.
 
 Captures minimum 8 screenshots of The Workshop:

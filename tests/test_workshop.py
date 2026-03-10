@@ -1,3 +1,4 @@
+# Author: Mani Padisetti
 """
 Tests for Workshop — Central Service Registry & Launcher.
 Uses httpx + pytest-asyncio. All external health pings are mocked.

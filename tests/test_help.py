@@ -1,3 +1,4 @@
+# Author: Mani Padisetti
 """Tests for the Context-Aware Help API (Phase 7).
 
 Covers:

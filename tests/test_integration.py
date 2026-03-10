@@ -1,3 +1,4 @@
+# Author: Mani Padisetti
 """Integration tests — Workshop talks to Supervisor, ELAINE, Foreperson.
 
 These tests run with mocked external services.  Full live integration

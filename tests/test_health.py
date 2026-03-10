@@ -1,3 +1,4 @@
+# Author: Mani Padisetti
 """Smoke + Beast tests for the Workshop health endpoint.
 
 Phase 0 regression tests plus new Phase 1 tests.

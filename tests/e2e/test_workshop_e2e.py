@@ -1,3 +1,4 @@
+# Author: Mani Padisetti
 """
 Playwright e2e tests for The Workshop V2.
 Requires the app to be running at http://localhost:5001/workshop/
