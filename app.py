@@ -223,6 +223,7 @@ app.add_middleware(
 @app.get("/api/health")
 @app.get("/health")
 @app.get("/workshop/health")
+@app.get("/workshop/api/health")
 async def api_health():
     db_ok = db_healthy()
     up_count = sum(1 for v in _health_cache.values() if v.get("status") == "up")
@@ -243,6 +244,7 @@ async def api_health():
 # API: /api/apps — full fleet with cached health
 # ---------------------------------------------------------------------------
 @app.get("/api/apps")
+@app.get("/workshop/api/apps")
 async def api_apps():
     apps = []
     for a in FLEET_REGISTRY:
@@ -283,6 +285,7 @@ async def api_apps():
 # API: /api/apps/{slug}/health — live check single app
 # ---------------------------------------------------------------------------
 @app.get("/api/apps/{slug}/health")
+@app.get("/workshop/api/apps/{slug}/health")
 async def api_app_health(slug: str):
     for a in FLEET_REGISTRY:
         if a["slug"] == slug:
@@ -300,6 +303,7 @@ async def api_app_health(slug: str):
 # API: /api/activity — recent fleet events
 # ---------------------------------------------------------------------------
 @app.get("/api/activity")
+@app.get("/workshop/api/activity")
 async def api_activity(limit: int = 10):
     try:
         conn = get_db()
@@ -329,6 +333,7 @@ async def api_activity(limit: int = 10):
 # API: /api/fleet-score — aggregate trust score from Sure?
 # ---------------------------------------------------------------------------
 @app.get("/api/fleet-score")
+@app.get("/workshop/api/fleet-score")
 async def api_fleet_score():
     try:
         async with httpx.AsyncClient(timeout=5) as client:
