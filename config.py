@@ -19,8 +19,8 @@ DATA_DIR.mkdir(exist_ok=True)
 LOGS_DIR.mkdir(exist_ok=True)
 
 # Workshop API
-PORT = int(os.getenv("AMTL_WKS_PORT", "5003"))
-HOST = os.getenv("AMTL_WKS_HOST", "127.0.0.1")
+PORT = int(os.getenv("AMTL_WKS_PORT", "5001"))
+HOST = os.getenv("AMTL_WKS_HOST", "0.0.0.0")
 LOG_LEVEL = os.getenv("AMTL_WKS_LOG_LEVEL", "INFO")
 
 # Health checks & self-healing
@@ -42,5 +42,13 @@ SUPERVISOR_URL = os.getenv("AMTL_SUPERVISOR_URL", "http://localhost:9000")
 ELAINE_URL = os.getenv("AMTL_ELAINE_URL", "http://localhost:5000")
 FOREPERSON_URL = os.getenv("AMTL_FOREPERSON_URL", "http://localhost:9100")
 
+# PostgreSQL (AMTL standard — port 5433)
+POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
+POSTGRES_PORT = int(os.getenv("POSTGRES_PORT", 5433))
+POSTGRES_USER = os.getenv("POSTGRES_USER", "amtl")
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "amtl")
+POSTGRES_DB = "workshop"
+DATABASE_URL = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
+
 # Version
-VERSION = "1.0.0"
+VERSION = "2.0.0"

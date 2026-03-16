@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en-AU" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Workshop — Almost Magic Tech Lab</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230A0E14'/><rect x='2' y='2' width='28' height='28' rx='6' fill='none' stroke='%23C9944A' stroke-width='1.5'/><text x='16' y='22' text-anchor='middle' font-family='monospace' font-size='14' font-weight='700' fill='%23C9944A'>W</text></svg>">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@300;400;500;600&display=swap');
+
+:root {
+  --bg:#0A0E14; --surface:#111620; --surface-2:#181E2A;
+  --border:#1E2535; --border-2:#252D3F;
+  --gold:#C9944A; --gold-dim:rgba(201,148,74,0.10);
+  --text:#D8D4CC; --text-bright:#EDEAE4;
+  --muted:#6B7590; --muted-2:#434B62;
+  --green:#4ADE80; --red:#F87171; --amber:#FBBF24; --blue:#60A5FA;
+  --sidebar-w:248px; --header-h:50px; --pin-h:44px;
+}
+[data-theme="light"] {
+  --bg:#F2F0EC; --surface:#FFFFFF; --surface-2:#EDEAE5;
+  --border:#DDD9D3; --border-2:#C8C4BE;
+  --text:#2C2C3A; --text-bright:#0E0E1A;
+  --muted:#7A7A8E; --muted-2:#A4A4B4;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden;font-size:13px;-webkit-font-smoothing:antialiased;}
+
+/* HEADER */
+.header{height:var(--header-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 18px;gap:12px;flex-shrink:0;z-index:10;}
+.brand-mark{width:26px;height:26px;border:1.5px solid var(--gold);border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:10px;color:var(--gold);font-weight:500;flex-shrink:0;}
+.brand-name{font-family:'Inter',sans-serif;font-size:14px;font-weight:600;color:var(--text-bright);letter-spacing:-0.2px;}
+.brand-name span{color:var(--gold);}
+.header-sep{flex:1;}
+.fleet-score{display:flex;align-items:center;gap:7px;background:var(--gold-dim);border:1px solid rgba(201,148,74,0.18);border-radius:20px;padding:5px 13px;cursor:default;}
+.fleet-score-label{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.5px;}
+.fleet-score-value{font-family:'DM Mono',monospace;font-size:13px;color:var(--gold);font-weight:500;}
+.fleet-pulse{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2.2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.45;transform:scale(0.78);}}
+.header-actions{display:flex;align-items:center;gap:6px;}
+.hbtn{height:30px;padding:0 12px;border-radius:6px;border:1px solid var(--border-2);background:transparent;color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:5px;font-size:13px;font-family:'Inter',sans-serif;font-weight:500;transition:all 0.13s;white-space:nowrap;}
+.hbtn:hover{background:var(--surface-2);color:var(--text-bright);border-color:var(--border-2);}
+.hbtn.mono{font-size:11px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.4px;}
+
+/* PINNED BAR */
+.pinned-bar{height:var(--pin-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:5px;flex-shrink:0;overflow-x:auto;}
+.pinned-bar::-webkit-scrollbar{display:none;}
+.pinned-label{font-size:10px;text-transform:uppercase;letter-spacing:0.7px;color:var(--muted-2);font-family:'DM Mono',monospace;white-space:nowrap;margin-right:4px;flex-shrink:0;}
+.pin-chip{display:flex;align-items:center;gap:6px;padding:5px 10px 5px 7px;border-radius:8px;border:1px solid var(--border-2);background:var(--surface-2);cursor:pointer;transition:all 0.13s;white-space:nowrap;flex-shrink:0;}
+.pin-chip:hover{border-color:var(--gold);background:var(--gold-dim);}
+.pin-badge{width:20px;height:20px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;font-family:'Inter',sans-serif;flex-shrink:0;}
+.pin-name{font-size:12px;font-weight:500;color:var(--text);}
+.pin-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+
+/* BODY */
+.body{display:flex;flex:1;overflow:hidden;}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden;}
+.status-bar{padding:11px 14px 9px;border-bottom:1px solid var(--border);}
+.status-bar-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.status-bar-label{font-size:10px;text-transform:uppercase;letter-spacing:0.7px;color:var(--muted);font-family:'DM Mono',monospace;}
+.status-counts{display:flex;gap:9px;}
+.status-count{display:flex;align-items:center;gap:3px;font-family:'DM Mono',monospace;font-size:11px;}
+.status-count.up{color:var(--green);} .status-count.down{color:var(--red);} .status-count.warn{color:var(--amber);}
+.mini-bar{height:3px;background:var(--border);border-radius:3px;overflow:hidden;display:flex;gap:1px;}
+.mini-bar-seg{height:100%;border-radius:3px;}
+.mini-bar-seg.up{background:var(--green);} .mini-bar-seg.warn{background:var(--amber);} .mini-bar-seg.down{background:var(--red);}
+.groups{flex:1;overflow-y:auto;padding:5px 0;}
+.groups::-webkit-scrollbar{width:3px;}
+.groups::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:3px;}
+.group{margin-bottom:1px;}
+.group-header{display:flex;align-items:center;gap:7px;padding:6px 14px;cursor:pointer;transition:background 0.1s;user-select:none;}
+.group-header:hover{background:var(--surface-2);}
+.group-arrow{font-size:7px;color:var(--muted-2);transition:transform 0.18s;width:8px;flex-shrink:0;}
+.group.open .group-arrow{transform:rotate(90deg);}
+.group-name{flex:1;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.7px;color:var(--muted);font-family:'DM Mono',monospace;}
+.group-badge{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted-2);background:var(--surface-2);border-radius:8px;padding:1px 6px;}
+.group-badge.all-up{color:var(--green);background:rgba(74,222,128,0.08);}
+.group-apps{display:none;padding:0 6px 4px;}
+.group.open .group-apps{display:block;}
+.app-row{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:7px;cursor:pointer;transition:background 0.1s;}
+.app-row:hover{background:var(--surface-2);} .app-row.active{background:var(--gold-dim);}
+.app-row.ghost{opacity:0.45;}
+.app-badge{width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;font-family:'Inter',sans-serif;flex-shrink:0;}
+.app-info{flex:1;min-width:0;}
+.app-name{font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3;}
+.app-port{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted-2);line-height:1;}
+.app-status{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.app-status.up{background:var(--green);box-shadow:0 0 5px rgba(74,222,128,0.35);}
+.app-status.down{background:var(--muted-2);}
+.app-status.warn,.app-status.degraded{background:var(--amber);}
+.app-status.degraded{animation:pulse 2s infinite;}
+.app-status.not_built{background:var(--muted-2);}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);}
+.tab-bar{height:38px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:flex-end;padding:0 14px;gap:2px;flex-shrink:0;}
+.tab{display:flex;align-items:center;gap:6px;padding:5px 11px;border-radius:6px 6px 0 0;cursor:pointer;font-size:12px;font-weight:500;color:var(--muted);transition:all 0.13s;border:1px solid transparent;border-bottom:none;margin-bottom:-1px;}
+.tab:hover{color:var(--text);background:var(--surface-2);}
+.tab.active{color:var(--text-bright);background:var(--bg);border-color:var(--border);border-bottom-color:var(--bg);}
+.tab-badge{width:15px;height:15px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;font-family:'Inter',sans-serif;}
+.tab-close{font-size:13px;color:var(--muted-2);padding:1px 3px;border-radius:3px;line-height:1;margin-left:1px;}
+.tab-close:hover{background:var(--border-2);color:var(--text);}
+
+/* WELCOME */
+.welcome{flex:1;display:flex;flex-direction:column;padding:28px 36px;overflow-y:auto;animation:fadeUp 0.28s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.welcome-header{margin-bottom:24px;}
+.welcome-greeting{font-family:'Inter',sans-serif;font-size:22px;font-weight:600;color:var(--text-bright);letter-spacing:-0.4px;line-height:1.2;margin-bottom:4px;}
+.welcome-sub{font-size:13px;color:var(--muted);font-weight:400;}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;}
+.metric-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:15px 16px;cursor:default;transition:border-color 0.18s;position:relative;overflow:hidden;animation:fadeUp 0.35s ease both;}
+.metric-card:nth-child(1){animation-delay:.04s;} .metric-card:nth-child(2){animation-delay:.08s;} .metric-card:nth-child(3){animation-delay:.12s;} .metric-card:nth-child(4){animation-delay:.16s;}
+.metric-card:hover{border-color:var(--border-2);}
+.metric-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:10px 10px 0 0;}
+.metric-card.green::before{background:var(--green);} .metric-card.gold::before{background:var(--gold);} .metric-card.amber::before{background:var(--amber);} .metric-card.blue::before{background:var(--blue);}
+.metric-label{font-size:10px;text-transform:uppercase;letter-spacing:0.7px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:9px;}
+.metric-value{font-family:'DM Mono',monospace;font-size:28px;font-weight:500;line-height:1;margin-bottom:4px;}
+.metric-card.green .metric-value{color:var(--green);} .metric-card.gold .metric-value{color:var(--gold);} .metric-card.amber .metric-value{color:var(--amber);} .metric-card.blue .metric-value{color:var(--blue);}
+.metric-detail{font-size:11px;color:var(--muted);}
+.content-grid{display:grid;grid-template-columns:1fr 296px;gap:12px;flex:1;min-height:0;}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;}
+.panel-header{display:flex;align-items:center;justify-content:space-between;padding:11px 15px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.panel-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.7px;color:var(--muted);font-family:'DM Mono',monospace;}
+.panel-action{font-size:12px;color:var(--gold);cursor:pointer;opacity:0.7;transition:opacity 0.13s;font-weight:500;}
+.panel-action:hover{opacity:1;}
+.app-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);flex:1;}
+.app-tile{background:var(--surface);padding:13px 13px 11px;cursor:pointer;transition:background 0.12s;display:flex;flex-direction:column;gap:8px;}
+.app-tile:hover{background:var(--surface-2);}
+.app-tile-top{display:flex;align-items:flex-start;justify-content:space-between;}
+.app-tile-badge{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:'Inter',sans-serif;}
+.app-tile-dot{width:6px;height:6px;border-radius:50%;margin-top:3px;flex-shrink:0;}
+.app-tile-name{font-size:12px;font-weight:600;color:var(--text-bright);line-height:1.2;}
+.app-tile-desc{font-size:11px;color:var(--muted);line-height:1.3;}
+.app-tile-port{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted-2);margin-top:1px;}
+.activity-feed{flex:1;overflow-y:auto;}
+.activity-item{display:flex;align-items:flex-start;gap:9px;padding:9px 15px;border-bottom:1px solid var(--border);transition:background 0.1s;cursor:default;}
+.activity-item:last-child{border-bottom:none;} .activity-item:hover{background:var(--surface-2);}
+.activity-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:5px;}
+.activity-text{font-size:12px;color:var(--text);line-height:1.4;margin-bottom:2px;}
+.activity-time{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted-2);}
+
+/* Toast */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--surface-2);border:1px solid var(--border-2);border-radius:8px;padding:8px 16px;font-size:12px;color:var(--text);z-index:100;opacity:0;transition:opacity 0.2s;pointer-events:none;}
+.toast.show{opacity:1;}
+
+/* Colours */
+.c-elaine{background:#FF6B6B1E;color:#FF8080;} .c-beast{background:#F472B61E;color:#F472B6;}
+.c-sure{background:#4ADE801E;color:#4ADE80;} .c-baldrick{background:#60A5FA1E;color:#60A5FA;}
+.c-fore{background:#94A3B81E;color:#94A3B8;} .c-ckw{background:#34D3991E;color:#34D399;}
+.c-ckla{background:#A78BFA1E;color:#A78BFA;} .c-junk{background:#78716C1E;color:#A8A29E;}
+.c-peterman{background:#FB923C1E;color:#FB923C;} .c-sophia{background:#E879F91E;color:#E879F9;}
+.c-costanza{background:#F973161E;color:#F97316;} .c-atlas{background:#38BDF81E;color:#38BDF8;}
+.c-sentinel{background:#FB923C1E;color:#FB923C;} .c-ripple{background:#10B9811E;color:#10B981;}
+.c-spark{background:#EC48991E;color:#EC4899;} .c-workshop{background:#C9944A1E;color:#C9944A;}
+.c-genie{background:#FDE0471E;color:#FDE047;}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="brand-mark">W</div>
+  <span class="brand-name">The <span>Workshop</span></span>
+  <div class="header-sep"></div>
+  <div class="fleet-score">
+    <span class="fleet-score-label">Fleet</span>
+    <span class="fleet-score-value" id="fleetScore">—/16</span>
+    <div class="fleet-pulse"></div>
+  </div>
+  <div class="header-actions">
+    <button class="hbtn" title="Search apps" onclick="alert('Search coming soon')">⌕ Search</button>
+    <button class="hbtn" onclick="alert('Start All coming soon')">▷ Start All</button>
+    <button class="hbtn mono" onclick="toggleTheme()">Dark</button>
+  </div>
+</header>
+
+<div class="pinned-bar" id="pinnedBar">
+  <span class="pinned-label">Pinned</span>
+</div>
+
+<div class="body">
+  <nav class="sidebar">
+    <div class="status-bar">
+      <div class="status-bar-row">
+        <span class="status-bar-label">Services</span>
+        <div class="status-counts" id="statusCounts">
+          <span class="status-count up">● —</span>
+          <span class="status-count warn">◐ —</span>
+          <span class="status-count down">○ —</span>
+        </div>
+      </div>
+      <div class="mini-bar" id="miniBar">
+        <div class="mini-bar-seg up" style="flex:1"></div>
+      </div>
+    </div>
+    <div class="groups" id="sidebarGroups"></div>
+  </nav>
+
+  <main class="main">
+    <div class="tab-bar" id="tabBar">
+      <div class="tab active"><div class="tab-badge c-workshop">W</div>Workshop</div>
+    </div>
+
+    <div class="welcome" id="welcomePanel">
+      <div class="welcome-header">
+        <div class="welcome-greeting" id="greeting">Good afternoon, Mani.</div>
+        <div class="welcome-sub" id="welcomeSub">Loading fleet status...</div>
+      </div>
+      <div class="metrics" id="metricsGrid">
+        <div class="metric-card green"><div class="metric-label">Running</div><div class="metric-value" id="metricRunning">—</div><div class="metric-detail" id="metricRunningDetail">of 16 services</div></div>
+        <div class="metric-card gold"><div class="metric-label">Fleet Trust</div><div class="metric-value" id="metricTrust">—</div><div class="metric-detail">Sure? average score</div></div>
+        <div class="metric-card amber"><div class="metric-label">Attention</div><div class="metric-value" id="metricAttention">—</div><div class="metric-detail">items need review</div></div>
+        <div class="metric-card blue"><div class="metric-label">Uptime</div><div class="metric-value" id="metricUptime">—</div><div class="metric-detail">since last restart</div></div>
+      </div>
+      <div class="content-grid">
+        <div class="panel">
+          <div class="panel-header"><span class="panel-title">Quick Launch</span><span class="panel-action">View all →</span></div>
+          <div class="app-grid" id="quickLaunch"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><span class="panel-title">Activity</span><span class="panel-action">Clear</span></div>
+          <div class="activity-feed" id="activityFeed"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = (function(){
+  const p = location.pathname;
+  if(p.startsWith('/workshop')) return '/workshop';
+  return '';
+})();
+
+let allApps = [];
+let startTime = Date.now();
+
+// Greeting
+function updateGreeting(){
+  const h=new Date().getHours();
+  let g='Good evening';
+  if(h<12) g='Good morning';
+  else if(h<17) g='Good afternoon';
+  document.getElementById('greeting').textContent=g+', Mani.';
+}
+updateGreeting();
+
+// Theme
+function toggleTheme(){
+  const h=document.documentElement,b=document.querySelector('.hbtn.mono');
+  h.dataset.theme=h.dataset.theme==='dark'?'light':'dark';
+  b.textContent=h.dataset.theme==='dark'?'Dark':'Light';
+}
+
+// Status dot colour
+function dotColour(status){
+  if(status==='up') return 'var(--green)';
+  if(status==='degraded') return 'var(--amber)';
+  if(status==='down') return 'var(--red)';
+  return 'var(--muted-2)';
+}
+function dotClass(status){
+  if(status==='up') return 'up';
+  if(status==='degraded') return 'degraded';
+  if(status==='down') return 'down';
+  return 'not_built';
+}
+
+// Tab system
+const C={elaine:'c-elaine',beast:'c-beast',sure:'c-sure',baldrick:'c-baldrick',ckwriter:'c-ckw',ckla:'c-ckla',sentinel:'c-sentinel',foreperson:'c-fore',junkdrawer:'c-junk',peterman:'c-peterman',atlas:'c-atlas',costanza:'c-costanza',sophia:'c-sophia',ripple:'c-ripple',spark:'c-spark',genie:'c-genie'};
+const I={elaine:'E',beast:'B',sure:'S?',baldrick:'Ba',ckwriter:'CK',ckla:'LA',sentinel:'DS',foreperson:'Fp',junkdrawer:'JD',peterman:'Pe',atlas:'IA',costanza:'Co',sophia:'So',ripple:'Ri',spark:'Sp',genie:'Ge'};
+const URLS={elaine:'/elaine/',beast:'/beast/',sure:'/sure/',baldrick:'/baldrick/',ckwriter:'/ckwriter/',ckla:'/ckla/',peterman:'/peterman/',junkdrawer:'/junkdrawer/',costanza:'/costanza/'};
+
+function openApp(name,key){
+  const app=allApps.find(a=>a.slug===key);
+  if(app && !app.built){showToast(name+' — coming soon');return;}
+  const bar=document.getElementById('tabBar');
+  const ex=bar.querySelector('[data-key="'+key+'"]');
+  if(ex){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));ex.classList.add('active');return;}
+  const tab=document.createElement('div');
+  tab.className='tab';tab.dataset.key=key;
+  tab.innerHTML='<div class="tab-badge '+(C[key]||'')+'">'+(I[key]||name[0])+'</div>'+name+'<span class="tab-close" onclick="closeTab(event,this)">\u00d7</span>';
+  tab.addEventListener('click',function(e){if(e.target.classList.contains('tab-close'))return;document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));this.classList.add('active');});
+  bar.appendChild(tab);
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  tab.classList.add('active');
+  if(URLS[key]) window.open(URLS[key],'_blank');
+}
+function closeTab(e,btn){e.stopPropagation();const t=btn.closest('.tab');const was=t.classList.contains('active');t.remove();if(was){const tabs=document.querySelectorAll('.tab');if(tabs.length)tabs[tabs.length-1].classList.add('active');}}
+
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000);}
+
+// Pinned bar
+function renderPinned(apps){
+  const bar=document.getElementById('pinnedBar');
+  bar.innerHTML='<span class="pinned-label">Pinned</span>';
+  apps.filter(a=>a.pinned).forEach(a=>{
+    const chip=document.createElement('div');
+    chip.className='pin-chip';
+    chip.onclick=()=>openApp(a.name,a.slug);
+    chip.innerHTML='<div class="pin-badge '+(a.badge_class||'')+'">'+a.badge+'</div><span class="pin-name">'+a.name+'</span><div class="pin-dot" style="background:'+dotColour(a.status)+'"></div>';
+    bar.appendChild(chip);
+  });
+}
+
+// Sidebar
+function renderSidebar(apps, groups){
+  const container=document.getElementById('sidebarGroups');
+  container.innerHTML='';
+  groups.forEach((groupName,gi)=>{
+    const groupApps=apps.filter(a=>a.group===groupName);
+    if(!groupApps.length) return;
+    const upCount=groupApps.filter(a=>a.status==='up').length;
+    const allUp=upCount===groupApps.length;
+    const div=document.createElement('div');
+    div.className='group'+(gi<2?' open':'');
+    div.innerHTML='<div class="group-header" onclick="this.parentElement.classList.toggle(\'open\')"><span class="group-arrow">\u25b6</span><span class="group-name">'+groupName+'</span><span class="group-badge'+(allUp?' all-up':'')+'">'+upCount+'/'+groupApps.length+'</span></div>';
+    const appsDiv=document.createElement('div');
+    appsDiv.className='group-apps';
+    groupApps.forEach(a=>{
+      const row=document.createElement('div');
+      row.className='app-row'+(a.built?'':' ghost');
+      row.onclick=()=>openApp(a.name,a.slug);
+      row.innerHTML='<div class="app-badge '+(a.badge_class||'')+'">'+a.badge+'</div><div class="app-info"><div class="app-name">'+a.name+'</div><div class="app-port">:'+a.port+'</div></div><div class="app-status '+dotClass(a.status)+'"></div>';
+      appsDiv.appendChild(row);
+    });
+    div.appendChild(appsDiv);
+    container.appendChild(div);
+  });
+}
+
+// Status bar counts
+function renderStatusCounts(summary){
+  const el=document.getElementById('statusCounts');
+  el.innerHTML='<span class="status-count up">\u25cf '+summary.up+'</span>'
+    +'<span class="status-count warn">\u25d0 '+summary.degraded+'</span>'
+    +'<span class="status-count down">\u25cb '+(summary.down+summary.not_built)+'</span>';
+  // Mini bar
+  const bar=document.getElementById('miniBar');
+  const total=summary.total||1;
+  bar.innerHTML='<div class="mini-bar-seg up" style="flex:'+summary.up+'"></div>'
+    +'<div class="mini-bar-seg warn" style="flex:'+summary.degraded+'"></div>'
+    +'<div class="mini-bar-seg down" style="flex:'+(summary.down+summary.not_built)+'"></div>';
+}
+
+// Quick launch tiles (pinned apps)
+function renderQuickLaunch(apps){
+  const grid=document.getElementById('quickLaunch');
+  grid.innerHTML='';
+  const pinned=apps.filter(a=>a.pinned);
+  pinned.forEach(a=>{
+    const tile=document.createElement('div');
+    tile.className='app-tile';
+    tile.onclick=()=>openApp(a.name,a.slug);
+    const statusDesc=a.status==='up'?a.description:a.status==='degraded'?'Degraded':a.status==='down'?'Offline':'Coming soon';
+    const descStyle=a.status==='degraded'?' style="color:var(--amber)"':a.status==='down'?' style="color:var(--red)"':'';
+    const dotStyle=a.status==='degraded'?'background:var(--amber);animation:pulse 2s infinite;':'background:'+dotColour(a.status)+';';
+    tile.innerHTML='<div class="app-tile-top"><div class="app-tile-badge '+(a.badge_class||'')+'">'+a.badge+'</div><div class="app-tile-dot" style="'+dotStyle+'"></div></div><div><div class="app-tile-name">'+a.name+'</div><div class="app-tile-desc"'+descStyle+'>'+statusDesc+'</div><div class="app-tile-port">:'+a.port+'</div></div>';
+    grid.appendChild(tile);
+  });
+}
+
+// Activity feed
+function renderActivity(entries){
+  const feed=document.getElementById('activityFeed');
+  if(!entries.length){
+    feed.innerHTML='<div class="activity-item"><div class="activity-dot" style="background:var(--muted-2)"></div><div><div class="activity-text">No recent activity.</div><div class="activity-time">—</div></div></div>';
+    return;
+  }
+  feed.innerHTML='';
+  const colourMap={green:'var(--green)',blue:'var(--blue)',amber:'var(--amber)',red:'var(--red)',grey:'var(--muted-2)'};
+  entries.forEach(e=>{
+    const item=document.createElement('div');
+    item.className='activity-item';
+    const dt=e.created_at?new Date(e.created_at):null;
+    const timeStr=dt?dt.toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'})+' today':'—';
+    item.innerHTML='<div class="activity-dot" style="background:'+(colourMap[e.dot_colour]||'var(--muted-2)')+'"></div><div><div class="activity-text">'+e.message+'</div><div class="activity-time">'+timeStr+'</div></div>';
+    feed.appendChild(item);
+  });
+}
+
+// Metrics
+function updateMetrics(summary){
+  document.getElementById('metricRunning').textContent=summary.up;
+  document.getElementById('metricRunningDetail').textContent='of '+summary.total+' services';
+  document.getElementById('metricAttention').textContent=summary.degraded+summary.down;
+  // Uptime
+  const mins=Math.floor((Date.now()-startTime)/60000);
+  const hrs=Math.floor(mins/60);
+  document.getElementById('metricUptime').textContent=hrs>0?hrs+'h':mins+'m';
+  // Welcome sub
+  document.getElementById('welcomeSub').textContent=summary.up+' services running \u00b7 '+summary.degraded+' degraded \u00b7 '+(summary.down+summary.not_built)+' offline';
+  // Fleet score header
+  document.getElementById('fleetScore').textContent=summary.up+'/'+summary.total;
+}
+
+// Fleet trust score from Sure?
+async function fetchFleetTrust(){
+  try{
+    const resp=await fetch(API+'/api/fleet-score');
+    const data=await resp.json();
+    if(data.score) document.getElementById('metricTrust').textContent=data.score;
+    else document.getElementById('metricTrust').textContent='—';
+  }catch(e){
+    document.getElementById('metricTrust').textContent='—';
+  }
+}
+
+// Main fetch loop
+async function fetchAll(){
+  try{
+    const resp=await fetch(API+'/api/apps');
+    const data=await resp.json();
+    allApps=data.apps;
+    renderPinned(data.apps);
+    renderSidebar(data.apps, data.groups);
+    renderStatusCounts(data.summary);
+    renderQuickLaunch(data.apps);
+    updateMetrics(data.summary);
+  }catch(e){
+    console.error('Fleet fetch failed:',e);
+  }
+  try{
+    const resp=await fetch(API+'/api/activity');
+    const data=await resp.json();
+    renderActivity(data.entries||[]);
+  }catch(e){
+    renderActivity([]);
+  }
+}
+
+fetchAll();
+fetchFleetTrust();
+setInterval(fetchAll,10000);
+setInterval(fetchFleetTrust,30000);
+</script>
+</body>
+</html>
