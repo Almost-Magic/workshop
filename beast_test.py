@@ -304,3 +304,55 @@ class TestSecurity:
         )
         data = r.json()
         assert "error" in data
+
+
+# ---------------------------------------------------------------------------
+# SECTION 7: WORKSHOP V3 FEATURES (5 tests)
+# ---------------------------------------------------------------------------
+class TestWorkshopV3:
+    """v3 feature tests -- Ctrl+K palette, workspaces, launcher, trust scores."""
+
+    def test_api_workspaces_endpoint(self):
+        """Happy: GET /workshop/api/workspaces returns workspace list."""
+        r = httpx.get(f"{BASE_URL}{PREFIX}/api/workspaces", timeout=10)
+        assert r.status_code == 200
+        data = r.json()
+        assert "workspaces" in data
+        assert isinstance(data["workspaces"], list)
+        assert len(data["workspaces"]) >= 1
+
+    def test_api_workspaces_returns_default_groups(self):
+        """Happy: Default workspaces include All, Morning Routine, Build Mode."""
+        r = httpx.get(f"{BASE_URL}{PREFIX}/api/workspaces", timeout=10)
+        assert r.status_code == 200
+        names = [ws["name"] for ws in r.json()["workspaces"]]
+        assert "All" in names
+        assert "Morning Routine" in names
+        assert "Build Mode" in names
+
+    def test_launcher_js_endpoint(self):
+        """Happy: GET /workshop/launcher.js returns JavaScript content."""
+        r = httpx.get(f"{BASE_URL}/workshop/launcher.js", timeout=10)
+        assert r.status_code == 200
+        assert "application/javascript" in r.headers.get("content-type", "")
+        assert "amtl-launcher" in r.text
+        assert "workshop" in r.text
+
+    def test_workshop_loads_with_cmd_palette_markup(self):
+        """Happy: Dashboard HTML contains command palette markup."""
+        r = httpx.get(f"{BASE_URL}/workshop/", timeout=10)
+        assert r.status_code == 200
+        body = r.text
+        assert "cmdPalette" in body
+        assert "cmdInput" in body
+        assert "workspaceBar" in body
+
+    def test_trust_scores_api_reachable(self):
+        """Happy: GET /workshop/api/fleet-health returns trust data."""
+        r = httpx.get(f"{BASE_URL}{PREFIX}/api/fleet-health", timeout=10)
+        assert r.status_code == 200
+        data = r.json()
+        assert "apps" in data
+        assert isinstance(data["apps"], list)
+        if len(data["apps"]) > 0:
+            assert "trust" in data["apps"][0]

@@ -155,6 +155,42 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var
 .c-sentinel{background:#FB923C1E;color:#FB923C;} .c-ripple{background:#10B9811E;color:#10B981;}
 .c-spark{background:#EC48991E;color:#EC4899;} .c-workshop{background:#C9944A1E;color:#C9944A;}
 .c-genie{background:#FDE0471E;color:#FDE047;}
+
+/* v3: Command Palette */
+.cmd-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:1000;display:none;align-items:flex-start;justify-content:center;padding-top:15vh;}
+.cmd-overlay.open{display:flex;}
+.cmd-box{background:var(--surface);border:1px solid var(--border-2);border-radius:12px;width:560px;overflow:hidden;box-shadow:0 25px 50px rgba(0,0,0,0.5);}
+.cmd-header{display:flex;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border);gap:12px;}
+.cmd-icon{color:var(--gold);font-size:16px;font-family:'DM Mono',monospace;}
+.cmd-input{flex:1;background:none;border:none;color:var(--text-bright);font-size:15px;outline:none;font-family:'Inter',sans-serif;}
+.cmd-input::placeholder{color:var(--muted-2);}
+.cmd-kbd{background:var(--surface-2);color:var(--muted-2);padding:2px 8px;border-radius:4px;font-size:11px;font-family:'DM Mono',monospace;}
+.cmd-results{max-height:400px;overflow-y:auto;padding:8px;}
+.cmd-item{padding:10px 16px;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:12px;transition:background 0.1s;}
+.cmd-item:hover,.cmd-item.selected{background:var(--gold-dim);}
+.cmd-item-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.cmd-item-name{flex:1;color:var(--text-bright);font-size:13px;}
+.cmd-item-meta{color:var(--muted-2);font-size:11px;font-family:'DM Mono',monospace;}
+.cmd-footer{padding:10px 20px;border-top:1px solid var(--border);display:flex;gap:20px;font-size:11px;color:var(--muted-2);font-family:'DM Mono',monospace;}
+
+/* v3: Workspace Pills */
+.workspace-bar{display:flex;gap:6px;padding:9px 15px;border-bottom:1px solid var(--border);overflow-x:auto;flex-shrink:0;}
+.workspace-bar::-webkit-scrollbar{display:none;}
+.ws-pill{height:26px;padding:0 12px;border-radius:13px;border:1px solid var(--border-2);background:transparent;color:var(--muted);cursor:pointer;font-size:11px;font-family:'Inter',sans-serif;font-weight:500;transition:all 0.13s;white-space:nowrap;display:flex;align-items:center;}
+.ws-pill:hover{border-color:var(--gold);color:var(--text);}
+.ws-pill.active{background:var(--gold-dim);border-color:var(--gold);color:var(--gold);}
+
+/* v3: Recent Apps Row */
+.recent-bar{display:flex;align-items:center;gap:8px;padding:9px 15px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.recent-label{font-size:10px;text-transform:uppercase;letter-spacing:0.7px;color:var(--muted-2);font-family:'DM Mono',monospace;white-space:nowrap;flex-shrink:0;}
+.recent-chip{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface-2);cursor:pointer;font-size:11px;color:var(--text);transition:all 0.12s;white-space:nowrap;flex-shrink:0;}
+.recent-chip:hover{border-color:var(--gold);background:var(--gold-dim);}
+.resume-btn{margin-left:auto;height:24px;padding:0 10px;border-radius:12px;border:1px solid var(--gold);background:var(--gold-dim);color:var(--gold);cursor:pointer;font-size:10px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.5px;transition:all 0.13s;flex-shrink:0;}
+.resume-btn:hover{background:var(--gold);color:var(--bg);}
+
+/* v3: Trust Badges on Tiles */
+.trust-badge{position:absolute;top:6px;right:6px;font-size:9px;padding:1px 5px;border-radius:10px;font-weight:600;font-family:'DM Mono',monospace;color:#fff;}
+.trust-high{background:#10B981;} .trust-mid{background:#E8A838;} .trust-low{background:#E05555;}
 </style>
 </head>
 <body>
@@ -169,7 +205,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var
     <div class="fleet-pulse"></div>
   </div>
   <div class="header-actions">
-    <button class="hbtn" title="Search apps" onclick="alert('Search coming soon')">⌕ Search</button>
+    <button class="hbtn" title="Search apps (Ctrl+K)" onclick="openPalette()">⌕ Search</button>
     <button class="hbtn" onclick="alert('Start All coming soon')">▷ Start All</button>
     <button class="hbtn mono" onclick="toggleTheme()">Dark</button>
   </div>
@@ -213,9 +249,15 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var
         <div class="metric-card amber"><div class="metric-label">Attention</div><div class="metric-value" id="metricAttention">—</div><div class="metric-detail">items need review</div></div>
         <div class="metric-card blue"><div class="metric-label">Uptime</div><div class="metric-value" id="metricUptime">—</div><div class="metric-detail">since last restart</div></div>
       </div>
+      <!-- v3: Recent Apps Row -->
+      <div class="recent-bar" id="recentBar" style="display:none;">
+        <span class="recent-label">Recent</span>
+      </div>
       <div class="content-grid">
         <div class="panel">
           <div class="panel-header"><span class="panel-title">Quick Launch</span><span class="panel-action">View all →</span></div>
+          <!-- v3: Workspace Pills -->
+          <div class="workspace-bar" id="workspaceBar"></div>
           <div class="app-grid" id="quickLaunch"></div>
         </div>
         <div class="panel">
@@ -225,6 +267,21 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var
       </div>
     </div>
   </main>
+</div>
+
+<!-- v3: Command Palette -->
+<div class="cmd-overlay" id="cmdPalette">
+  <div class="cmd-box">
+    <div class="cmd-header">
+      <span class="cmd-icon">⌘</span>
+      <input class="cmd-input" id="cmdInput" type="text" placeholder="Search apps, actions..." autocomplete="off">
+      <kbd class="cmd-kbd">ESC</kbd>
+    </div>
+    <div class="cmd-results" id="cmdResults"></div>
+    <div class="cmd-footer">
+      <span>↑↓ navigate</span><span>↵ open</span><span>ESC close</span>
+    </div>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -238,6 +295,10 @@ const API = (function(){
 
 let allApps = [];
 let startTime = Date.now();
+let activeWorkspace = 'all';
+let workspaces = [];
+let trustScores = {};
+let cmdSelectedIdx = 0;
 
 // Greeting
 function updateGreeting(){
@@ -347,19 +408,31 @@ function renderStatusCounts(summary){
     +'<div class="mini-bar-seg down" style="flex:'+(summary.down+summary.not_built)+'"></div>';
 }
 
-// Quick launch tiles (pinned apps)
+// Quick launch tiles — v3: workspace filtering + trust badges
 function renderQuickLaunch(apps){
   const grid=document.getElementById('quickLaunch');
   grid.innerHTML='';
-  const pinned=apps.filter(a=>a.pinned);
-  pinned.forEach(a=>{
+  let filtered=apps;
+  if(activeWorkspace!=='all'){
+    const ws=workspaces.find(w=>w.id===activeWorkspace);
+    if(ws && ws.slugs && ws.slugs.length>0){
+      filtered=apps.filter(a=>ws.slugs.includes(a.slug));
+    }
+  } else {
+    filtered=apps.filter(a=>a.pinned);
+  }
+  filtered.forEach(a=>{
     const tile=document.createElement('div');
     tile.className='app-tile';
-    tile.onclick=()=>openApp(a.name,a.slug);
+    tile.style.position='relative';
+    tile.onclick=()=>{trackAppOpen(a.slug);openApp(a.name,a.slug);};
     const statusDesc=a.status==='up'?a.description:a.status==='degraded'?'Degraded':a.status==='down'?'Offline':'Coming soon';
     const descStyle=a.status==='degraded'?' style="color:var(--amber)"':a.status==='down'?' style="color:var(--red)"':'';
     const dotStyle=a.status==='degraded'?'background:var(--amber);animation:pulse 2s infinite;':'background:'+dotColour(a.status)+';';
-    tile.innerHTML='<div class="app-tile-top"><div class="app-tile-badge '+(a.badge_class||'')+'">'+a.badge+'</div><div class="app-tile-dot" style="'+dotStyle+'"></div></div><div><div class="app-tile-name">'+a.name+'</div><div class="app-tile-desc"'+descStyle+'>'+statusDesc+'</div><div class="app-tile-port">:'+a.port+'</div></div>';
+    // v3: trust badge
+    const trust=trustScores[a.slug]||0;
+    const trustHtml=trust?'<span class="trust-badge '+(trust>=90?'trust-high':trust>=80?'trust-mid':'trust-low')+'">'+trust+'</span>':'';
+    tile.innerHTML='<div class="app-tile-top"><div class="app-tile-badge '+(a.badge_class||'')+'">'+a.badge+'</div><div class="app-tile-dot" style="'+dotStyle+'"></div></div><div><div class="app-tile-name">'+a.name+'</div><div class="app-tile-desc"'+descStyle+'>'+statusDesc+'</div><div class="app-tile-port">:'+a.port+'</div></div>'+trustHtml;
     grid.appendChild(tile);
   });
 }
@@ -433,10 +506,145 @@ async function fetchAll(){
   }
 }
 
+// ---------------------------------------------------------------------------
+// v3: Command Palette
+// ---------------------------------------------------------------------------
+function openPalette(){
+  document.getElementById('cmdPalette').classList.add('open');
+  const inp=document.getElementById('cmdInput');
+  inp.value='';inp.focus();
+  cmdSelectedIdx=0;
+  renderCmdResults('');
+}
+function closePalette(){
+  document.getElementById('cmdPalette').classList.remove('open');
+}
+function renderCmdResults(query){
+  const results=query
+    ? allApps.filter(a=>a.name.toLowerCase().includes(query.toLowerCase())||a.slug.toLowerCase().includes(query.toLowerCase()))
+    : allApps.filter(a=>a.built).slice(0,8);
+  const container=document.getElementById('cmdResults');
+  container.innerHTML='';
+  results.forEach((a,i)=>{
+    const div=document.createElement('div');
+    div.className='cmd-item'+(i===cmdSelectedIdx?' selected':'');
+    const trust=trustScores[a.slug]||0;
+    div.innerHTML='<div class="cmd-item-dot" style="background:'+dotColour(a.status)+'"></div><span class="cmd-item-name">'+a.name+'</span><span class="cmd-item-meta">:'+a.port+(trust?' · trust:'+trust:'')+'</span>';
+    div.onclick=()=>{trackAppOpen(a.slug);openApp(a.name,a.slug);closePalette();};
+    container.appendChild(div);
+  });
+}
+document.getElementById('cmdInput').addEventListener('input',e=>{
+  cmdSelectedIdx=0;renderCmdResults(e.target.value);
+});
+document.getElementById('cmdInput').addEventListener('keydown',e=>{
+  const items=document.querySelectorAll('.cmd-item');
+  if(e.key==='ArrowDown'){e.preventDefault();cmdSelectedIdx=Math.min(cmdSelectedIdx+1,items.length-1);}
+  if(e.key==='ArrowUp'){e.preventDefault();cmdSelectedIdx=Math.max(cmdSelectedIdx-1,0);}
+  if(e.key==='Enter'&&items[cmdSelectedIdx]){items[cmdSelectedIdx].click();}
+  if(e.key==='Escape'){closePalette();}
+  renderCmdResults(document.getElementById('cmdInput').value);
+});
+document.getElementById('cmdPalette').addEventListener('click',e=>{
+  if(e.target===document.getElementById('cmdPalette')) closePalette();
+});
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key==='k'){e.preventDefault();openPalette();}
+});
+
+// ---------------------------------------------------------------------------
+// v3: Workspaces
+// ---------------------------------------------------------------------------
+async function fetchWorkspaces(){
+  try{
+    const resp=await fetch(API+'/api/workspaces');
+    const data=await resp.json();
+    workspaces=data.workspaces||[];
+    renderWorkspacePills();
+  }catch(e){
+    workspaces=[{id:'all',name:'All',slugs:[]}];
+    renderWorkspacePills();
+  }
+}
+function renderWorkspacePills(){
+  const bar=document.getElementById('workspaceBar');
+  bar.innerHTML='';
+  workspaces.forEach(ws=>{
+    const pill=document.createElement('button');
+    pill.className='ws-pill'+(ws.id===activeWorkspace?' active':'');
+    pill.textContent=ws.name;
+    pill.onclick=()=>{activeWorkspace=ws.id;renderWorkspacePills();renderQuickLaunch(allApps);};
+    bar.appendChild(pill);
+  });
+}
+
+// ---------------------------------------------------------------------------
+// v3: Session Memory
+// ---------------------------------------------------------------------------
+function trackAppOpen(slug){
+  const recent=JSON.parse(localStorage.getItem('workshop_recent')||'[]');
+  const filtered=recent.filter(r=>r.slug!==slug);
+  filtered.unshift({slug:slug,ts:Date.now()});
+  localStorage.setItem('workshop_recent',JSON.stringify(filtered.slice(0,5)));
+  renderRecentApps();
+}
+function renderRecentApps(){
+  const recent=JSON.parse(localStorage.getItem('workshop_recent')||'[]');
+  const bar=document.getElementById('recentBar');
+  if(!recent.length){bar.style.display='none';return;}
+  bar.style.display='flex';
+  bar.innerHTML='<span class="recent-label">Recent</span>';
+  recent.slice(0,5).forEach(r=>{
+    const app=allApps.find(a=>a.slug===r.slug);
+    if(!app) return;
+    const chip=document.createElement('div');
+    chip.className='recent-chip';
+    chip.onclick=()=>{trackAppOpen(app.slug);openApp(app.name,app.slug);};
+    chip.innerHTML=app.name;
+    bar.appendChild(chip);
+  });
+  if(recent.length>=2){
+    const btn=document.createElement('button');
+    btn.className='resume-btn';
+    btn.textContent='Resume Session';
+    btn.onclick=()=>{
+      recent.slice(0,3).forEach(r=>{
+        const a=allApps.find(x=>x.slug===r.slug);
+        if(a && URLS[a.slug]) window.open(URLS[a.slug],'_blank');
+      });
+    };
+    bar.appendChild(btn);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// v3: Trust Score Badges
+// ---------------------------------------------------------------------------
+async function fetchTrustScores(){
+  try{
+    const resp=await fetch(API+'/api/fleet-health');
+    const data=await resp.json();
+    if(data.apps){
+      data.apps.forEach(a=>{
+        if(a.trust) trustScores[a.slug]=a.trust;
+      });
+    }
+    // Re-render tiles with trust data
+    if(allApps.length) renderQuickLaunch(allApps);
+  }catch(e){}
+}
+
+// ---------------------------------------------------------------------------
+// Init
+// ---------------------------------------------------------------------------
 fetchAll();
 fetchFleetTrust();
+fetchWorkspaces();
+fetchTrustScores();
+renderRecentApps();
 setInterval(fetchAll,10000);
 setInterval(fetchFleetTrust,30000);
+setInterval(fetchTrustScores,60000);
 </script>
 </body>
 </html>

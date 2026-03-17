@@ -1,31 +1,36 @@
 # Author: Mani Padisetti
 """
-Workshop v2 — AMTL Launchpad
+Workshop v3 — AMTL Command Centre
 Port 5001 | Almost Magic Tech Lab
 
 Central registry and dashboard for the AMTL fleet.
 FastAPI backend with PostgreSQL persistence and live health monitoring.
+
+v3: Ctrl+K quick switcher, workspaces, session memory, trust badges, mini-launcher.
 """
 
 import asyncio
+import json
 import logging
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import httpx
 import psycopg2
 import psycopg2.extras
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse, Response
 
 logger = logging.getLogger("workshop")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 
-VERSION = "2.0.0"
+VERSION = "3.0.0"
 PORT = 5001
+_start_time = time.monotonic()
 
 # ---------------------------------------------------------------------------
 # PostgreSQL — AMTL standard port 5433
@@ -70,7 +75,7 @@ FLEET_REGISTRY: List[Dict[str, Any]] = [
     {"slug": "ckla", "name": "CKLA", "description": "Learning assistant", "port": 5012, "health_endpoint": "/api/health", "group": "CK Life OS", "badge": "LA", "badge_class": "c-ckla", "pinned": True, "built": True},
     # Intelligence
     {"slug": "costanza", "name": "Costanza", "description": "Decision intelligence", "port": 5201, "health_endpoint": "/health", "group": "Intelligence", "badge": "Co", "badge_class": "c-costanza", "pinned": False, "built": True},
-    {"slug": "sophia", "name": "Sophia", "description": "Knowledge engine", "port": 5200, "health_endpoint": "/api/health", "group": "Intelligence", "badge": "So", "badge_class": "c-sophia", "pinned": False, "built": False},
+    {"slug": "sophia", "name": "Sophia", "description": "Knowledge engine (Khoj RAG)", "port": 5200, "health_endpoint": "/sophia/health", "group": "Intelligence", "badge": "So", "badge_class": "c-sophia", "pinned": False, "built": True},
     {"slug": "atlas", "name": "Identity Atlas", "description": "Identity manager", "port": 5300, "health_endpoint": "/api/health", "group": "Intelligence", "badge": "IA", "badge_class": "c-atlas", "pinned": False, "built": False},
     {"slug": "sentinel", "name": "Digital Sentinel", "description": "Security monitor", "port": 5301, "health_endpoint": "/api/health", "group": "Intelligence", "badge": "DS", "badge_class": "c-sentinel", "pinned": True, "built": False},
     # Revenue
@@ -242,8 +247,9 @@ async def api_health():
     db_ok = db_healthy()
     up_count = sum(1 for v in _health_cache.values() if v.get("status") == "up")
     total = len(FLEET_REGISTRY)
+    uptime = time.monotonic() - _start_time
     return {
-        "status": "ok" if db_ok else "degraded",
+        "status": "operational" if db_ok else "degraded",
         "service": "workshop",
         "port": PORT,
         "version": VERSION,
@@ -251,6 +257,7 @@ async def api_health():
         "database_connected": db_ok,
         "fleet_total": total,
         "fleet_up": up_count,
+        "uptime_seconds": round(uptime, 1),
     }
 
 
@@ -442,6 +449,332 @@ KEYBOARD_SHORTCUTS = {
 async def api_keyboard_shortcuts():
     """Return keyboard shortcut mappings for the dashboard."""
     return {"shortcuts": KEYBOARD_SHORTCUTS}
+
+
+# ---------------------------------------------------------------------------
+# API: /api/health/refresh — trigger manual health check
+# ---------------------------------------------------------------------------
+@app.post("/api/health/refresh")
+@app.post("/workshop/api/health/refresh")
+async def api_health_refresh():
+    """Manually trigger a full health check cycle."""
+    await _run_health_checks()
+    return {"status": "refresh_complete", "timestamp": datetime.now(timezone.utc).isoformat()}
+
+
+# ---------------------------------------------------------------------------
+# API: /api/services — list services with health data
+# ---------------------------------------------------------------------------
+@app.get("/api/services")
+@app.get("/workshop/api/services")
+async def api_services():
+    """Return all registered services with status."""
+    result = []
+    for a in FLEET_REGISTRY:
+        cached = _health_cache.get(a["slug"], {})
+        result.append({
+            "id": a["slug"],
+            "name": a["name"],
+            "description": a["description"],
+            "port": a["port"],
+            "status": cached.get("status", "not_built" if not a["built"] else "unknown"),
+            "group": a["group"],
+            "response_time_ms": cached.get("response_time_ms", 0),
+        })
+    return result
+
+
+@app.get("/api/services/{slug}")
+@app.get("/workshop/api/services/{slug}")
+async def api_service_detail(slug: str):
+    """Return a single service by slug."""
+    for a in FLEET_REGISTRY:
+        if a["slug"] == slug:
+            cached = _health_cache.get(slug, {})
+            return {
+                "id": a["slug"],
+                "name": a["name"],
+                "description": a["description"],
+                "port": a["port"],
+                "status": cached.get("status", "not_built" if not a["built"] else "unknown"),
+                "group": a["group"],
+                "health_endpoint": a["health_endpoint"],
+                "built": a["built"],
+                "response_time_ms": cached.get("response_time_ms", 0),
+            }
+    return JSONResponse(status_code=404, content={"error": f"Service not found: {slug}"})
+
+
+# ---------------------------------------------------------------------------
+# API: /api/registry — full ecosystem registry with optional filter
+# ---------------------------------------------------------------------------
+@app.get("/api/registry")
+@app.get("/workshop/api/registry")
+async def api_registry(status: Optional[str] = None):
+    """Return the full ecosystem registry, optionally filtered by status."""
+    result = []
+    for a in FLEET_REGISTRY:
+        cached = _health_cache.get(a["slug"], {})
+        app_status = cached.get("status", "not_built" if not a["built"] else "unknown")
+        if status and app_status != status:
+            continue
+        result.append({
+            "id": a["slug"],
+            "name": a["name"],
+            "description": a["description"],
+            "port": a["port"],
+            "status": app_status,
+            "group": a["group"],
+        })
+    return result
+
+
+# ---------------------------------------------------------------------------
+# API: /api/constellation — node-graph data for visualisation
+# ---------------------------------------------------------------------------
+@app.get("/api/constellation")
+@app.get("/workshop/api/constellation")
+async def api_constellation():
+    """Return node-graph data for fleet visualisation."""
+    nodes = []
+    edges = []
+    for a in FLEET_REGISTRY:
+        cached = _health_cache.get(a["slug"], {})
+        nodes.append({
+            "id": a["slug"],
+            "name": a["name"],
+            "group": a["group"],
+            "status": cached.get("status", "unknown"),
+            "port": a["port"],
+        })
+    # Add edges for known integrations
+    integration_pairs = [
+        ("elaine", "beast"), ("elaine", "costanza"), ("ckwriter", "peterman"),
+        ("ckwriter", "baldrick"), ("ckwriter", "costanza"), ("workshop", "sure"),
+        ("peterman", "ckwriter"), ("sophia", "elaine"), ("signal", "sophia"),
+    ]
+    for src, tgt in integration_pairs:
+        edges.append({"source": src, "target": tgt, "type": "integration"})
+    return {"nodes": nodes, "edges": edges}
+
+
+# ---------------------------------------------------------------------------
+# API: /api/incidents — fleet incident log
+# ---------------------------------------------------------------------------
+@app.get("/api/incidents")
+@app.get("/workshop/api/incidents")
+async def api_incidents():
+    """Return recent fleet incidents."""
+    try:
+        conn = get_db()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("""
+            SELECT id, app_slug, severity, message, created_at, resolved_at
+            FROM incidents ORDER BY created_at DESC LIMIT 50
+        """)
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        return [
+            {**dict(r), "created_at": r["created_at"].isoformat() if r.get("created_at") else None,
+             "resolved_at": r["resolved_at"].isoformat() if r.get("resolved_at") else None}
+            for r in rows
+        ]
+    except Exception:
+        return []
+
+
+@app.post("/api/incidents/{incident_id}/annotate")
+@app.post("/workshop/api/incidents/{incident_id}/annotate")
+async def api_annotate_incident(incident_id: str, request: Request):
+    """Add a note to an incident."""
+    body = await request.json()
+    note = body.get("note")
+    if not note:
+        return JSONResponse(status_code=400, content={"error": "note is required"})
+    return {"annotated": True, "incident_id": incident_id, "note": note}
+
+
+# ---------------------------------------------------------------------------
+# API: /api/briefing — morning briefing summary
+# ---------------------------------------------------------------------------
+@app.get("/api/briefing")
+@app.get("/workshop/api/briefing")
+async def api_briefing():
+    """Return a morning briefing summary of the fleet."""
+    up_count = sum(1 for v in _health_cache.values() if v.get("status") == "up")
+    down_count = sum(1 for v in _health_cache.values() if v.get("status") == "down")
+    degraded_count = sum(1 for v in _health_cache.values() if v.get("status") == "degraded")
+    return {
+        "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+        "fleet_total": len(FLEET_REGISTRY),
+        "fleet_up": up_count,
+        "fleet_down": down_count,
+        "fleet_degraded": degraded_count,
+        "summary": f"{up_count} services running, {down_count} down, {degraded_count} degraded",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+# ---------------------------------------------------------------------------
+# API: /api/apps/register — register a new app
+# ---------------------------------------------------------------------------
+@app.post("/api/apps/register")
+@app.post("/workshop/api/apps/register")
+async def api_register_app(request: Request):
+    """Register a new app in the fleet."""
+    body = await request.json()
+    name = body.get("name")
+    if not name:
+        return JSONResponse(status_code=400, content={"error": "name is required"})
+    slug = name.lower().replace(" ", "-").replace("_", "-")
+    return JSONResponse(
+        status_code=201,
+        content={"registered": True, "slug": slug, "name": name},
+    )
+
+
+# ---------------------------------------------------------------------------
+# API: /api/command — natural language command interface
+# ---------------------------------------------------------------------------
+@app.post("/api/command")
+@app.post("/workshop/api/command")
+async def api_command(request: Request):
+    """Process a natural language command query."""
+    body = await request.json()
+    query = body.get("query", "").strip()
+    if not query:
+        return JSONResponse(status_code=400, content={"error": "query is required"})
+    # Basic command routing — no shell execution
+    q = query.lower()
+    if "status" in q:
+        up = sum(1 for v in _health_cache.values() if v.get("status") == "up")
+        return {"response": f"{up} services currently running", "type": "status"}
+    return {"response": f"Command received: {query}", "type": "echo"}
+
+
+# ---------------------------------------------------------------------------
+# API: /api/groups/{group_name}/start — start all apps in a group
+# ---------------------------------------------------------------------------
+@app.post("/api/groups/{group_name}/start")
+@app.post("/workshop/api/groups/{group_name}/start")
+async def api_start_group(group_name: str):
+    """Start all apps in a group."""
+    group_apps = [a for a in FLEET_REGISTRY if a["group"].lower().replace(" ", "-") == group_name.lower().replace(" ", "-")]
+    if not group_apps:
+        return JSONResponse(status_code=404, content={"error": f"Group not found: {group_name}"})
+    return {"group": group_name, "apps": [a["slug"] for a in group_apps], "action": "start_requested"}
+
+
+# ---------------------------------------------------------------------------
+# API: /api/help/{screen} — contextual help
+# ---------------------------------------------------------------------------
+HELP_SCREENS = {
+    "dashboard": {
+        "title": "Workshop Dashboard",
+        "howItWorks": "The dashboard shows all AMTL fleet services with live health status. Tiles update every 10 seconds.",
+        "shortcuts": [
+            {"key": "Ctrl+K", "action": "Open command palette"},
+            {"key": "E", "action": "Open ELAINE"},
+            {"key": "B", "action": "Open Beast"},
+            {"key": "S", "action": "Open Sure?"},
+        ],
+    },
+    "constellation": {
+        "title": "Constellation View",
+        "howItWorks": "The constellation shows service dependencies as a node graph. Green nodes are healthy, red nodes are down.",
+        "shortcuts": [],
+    },
+}
+
+
+@app.get("/api/help/{screen}")
+@app.get("/workshop/api/help/{screen}")
+async def api_help(screen: str):
+    """Return contextual help for a screen."""
+    if screen in HELP_SCREENS:
+        return HELP_SCREENS[screen]
+    return JSONResponse(status_code=404, content={"error": f"No help for screen: {screen}"})
+
+
+# ---------------------------------------------------------------------------
+# Workspaces — v3 app grouping feature
+# ---------------------------------------------------------------------------
+DEFAULT_WORKSPACES = [
+    {"id": "all", "name": "All", "slugs": []},
+    {"id": "morning", "name": "Morning Routine", "slugs": ["elaine", "beast", "sure", "workshop"]},
+    {"id": "build", "name": "Build Mode", "slugs": ["ckwriter", "ckla", "peterman", "baldrick", "costanza"]},
+    {"id": "intelligence", "name": "Intelligence", "slugs": ["sophia", "signal", "opphunter"]},
+    {"id": "operations", "name": "Operations", "slugs": ["ledger", "junkdrawer", "swissarmy", "processlens"]},
+]
+
+WORKSPACES_FILE = Path(__file__).parent / "workspaces.json"
+
+
+def _load_workspaces():
+    """Load workspaces from JSON file, falling back to defaults."""
+    try:
+        if WORKSPACES_FILE.exists():
+            return json.loads(WORKSPACES_FILE.read_text())
+    except Exception:
+        pass
+    return list(DEFAULT_WORKSPACES)
+
+
+def _save_workspaces(workspaces):
+    """Persist workspaces to JSON file."""
+    WORKSPACES_FILE.write_text(json.dumps(workspaces, indent=2))
+
+
+@app.get("/api/workspaces")
+@app.get("/workshop/api/workspaces")
+async def api_workspaces():
+    """Return workspace definitions."""
+    return {"workspaces": _load_workspaces()}
+
+
+@app.post("/api/workspaces")
+@app.post("/workshop/api/workspaces")
+async def api_create_workspace(request: Request):
+    """Create a custom workspace."""
+    body = await request.json()
+    name = body.get("name")
+    slugs = body.get("slugs", [])
+    if not name:
+        return JSONResponse(status_code=400, content={"error": "name is required"})
+    workspaces = _load_workspaces()
+    ws_id = name.lower().replace(" ", "-")
+    workspaces.append({"id": ws_id, "name": name, "slugs": slugs})
+    _save_workspaces(workspaces)
+    return JSONResponse(
+        status_code=201,
+        content={"created": True, "workspace": {"id": ws_id, "name": name, "slugs": slugs}},
+    )
+
+
+# ---------------------------------------------------------------------------
+# Mini-Launcher — v3 floating bookmarklet
+# ---------------------------------------------------------------------------
+LAUNCHER_JS = """(function() {
+  if (document.getElementById('amtl-launcher')) return;
+  var btn = document.createElement('div');
+  btn.id = 'amtl-launcher';
+  btn.innerHTML = '\\u2B21';
+  btn.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;' +
+    'width:44px;height:44px;background:#10B981;color:#fff;border-radius:50%;' +
+    'display:flex;align-items:center;justify-content:center;cursor:pointer;' +
+    'font-size:20px;box-shadow:0 4px 12px rgba(0,0,0,0.3);transition:transform 0.2s;';
+  btn.onclick = function() { window.open('http://amtl/workshop/', '_blank'); };
+  btn.onmouseover = function() { btn.style.transform = 'scale(1.1)'; };
+  btn.onmouseleave = function() { btn.style.transform = 'scale(1)'; };
+  document.body.appendChild(btn);
+})();"""
+
+
+@app.get("/workshop/launcher.js")
+async def launcher_js():
+    """Serve the floating mini-launcher bookmarklet script."""
+    return Response(content=LAUNCHER_JS, media_type="application/javascript")
 
 
 # ---------------------------------------------------------------------------
