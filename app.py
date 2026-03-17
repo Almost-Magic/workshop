@@ -365,6 +365,86 @@ async def api_fleet_score():
 
 
 # ---------------------------------------------------------------------------
+# API: /api/fleet-health — Phase 3 fleet health panel data
+# ---------------------------------------------------------------------------
+@app.get("/api/fleet-health")
+@app.get("/workshop/api/fleet-health")
+async def api_fleet_health():
+    """Fleet health strip data — status, response times, trust scores."""
+    # Get trust scores from Sure?
+    trust_scores = {}
+    try:
+        async with httpx.AsyncClient(timeout=5) as client:
+            resp = await client.get("http://localhost:5160/sure/api/trust-scores")
+            if resp.status_code == 200:
+                for s in resp.json().get("scores", []):
+                    trust_scores[s.get("app", "")] = s.get("score", 0)
+    except Exception:
+        pass
+
+    apps = []
+    for a in FLEET_REGISTRY:
+        cached = _health_cache.get(a["slug"], {})
+        apps.append({
+            "slug": a["slug"],
+            "name": a["name"],
+            "port": a["port"],
+            "status": cached.get("status", "unknown"),
+            "response_ms": cached.get("response_time_ms", 0),
+            "trust": trust_scores.get(a["slug"], 0),
+            "checked_at": cached.get("checked_at"),
+        })
+
+    up = sum(1 for a in apps if a["status"] == "up")
+    down = sum(1 for a in apps if a["status"] == "down")
+    degraded = sum(1 for a in apps if a["status"] == "degraded")
+
+    return {
+        "checked_at": datetime.now(timezone.utc).isoformat(),
+        "apps": apps,
+        "summary": {"up": up, "down": down, "degraded": degraded},
+    }
+
+
+# ---------------------------------------------------------------------------
+# API: /api/apps/{slug}/open — Phase 4 quick launch
+# ---------------------------------------------------------------------------
+@app.get("/api/apps/{slug}/open")
+@app.get("/workshop/api/apps/{slug}/open")
+async def api_open_app(slug: str):
+    """Quick launch — return URL for the app."""
+    for a in FLEET_REGISTRY:
+        if a["slug"] == slug:
+            url = f"http://amtl/{slug}/"
+            return {"slug": slug, "name": a["name"], "url": url, "port": a["port"]}
+    return {"error": f"Unknown app: {slug}"}
+
+
+# ---------------------------------------------------------------------------
+# API: /api/keyboard-shortcuts — Phase 4 keyboard shortcut config
+# ---------------------------------------------------------------------------
+KEYBOARD_SHORTCUTS = {
+    "e": {"app": "elaine", "label": "ELAINE"},
+    "b": {"app": "beast", "label": "Beast"},
+    "s": {"app": "sure", "label": "Sure?"},
+    "p": {"app": "peterman", "label": "Peterman"},
+    "c": {"app": "ckwriter", "label": "CK Writer"},
+    "l": {"app": "ckla", "label": "CKLA"},
+    "d": {"app": "baldrick", "label": "Baldrick"},
+    "o": {"app": "costanza", "label": "Costanza"},
+    "w": {"app": "workshop", "label": "Workshop"},
+    "?": {"action": "show_help", "label": "Show shortcuts"},
+}
+
+
+@app.get("/api/keyboard-shortcuts")
+@app.get("/workshop/api/keyboard-shortcuts")
+async def api_keyboard_shortcuts():
+    """Return keyboard shortcut mappings for the dashboard."""
+    return {"shortcuts": KEYBOARD_SHORTCUTS}
+
+
+# ---------------------------------------------------------------------------
 # Dashboard — serve the locked mockup with live data wiring
 # ---------------------------------------------------------------------------
 @app.get("/", response_class=HTMLResponse)
