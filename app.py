@@ -64,8 +64,9 @@ FLEET_REGISTRY: List[Dict[str, Any]] = [
     {"slug": "sure", "name": "Sure?", "description": "Testing engine", "port": 5160, "health_endpoint": "/sure/api/health", "group": "Infrastructure", "badge": "S?", "badge_class": "c-sure", "pinned": True, "built": True},
     {"slug": "baldrick", "name": "Baldrick", "description": "Execution partner", "port": 5050, "health_endpoint": "/health", "group": "Infrastructure", "badge": "Ba", "badge_class": "c-baldrick", "pinned": True, "built": True},
     {"slug": "foreperson", "name": "Foreperson", "description": "Quality auditor", "port": 9100, "health_endpoint": "/api/health", "group": "Infrastructure", "badge": "Fp", "badge_class": "c-fore", "pinned": False, "built": False},
+    {"slug": "helsinki", "name": "Helsinki", "description": "Translation service", "port": 5503, "health_endpoint": "/health", "group": "Infrastructure", "badge": "He", "badge_class": "c-helsinki", "pinned": False, "built": True},
     # CK Life OS
-    {"slug": "ckwriter", "name": "CK Writer", "description": "Creative Studio", "port": 5004, "health_endpoint": "/api/health", "group": "CK Life OS", "badge": "CK", "badge_class": "c-ckw", "pinned": True, "built": True},
+    {"slug": "ckwriter", "name": "CK Writer", "description": "Creative Studio", "port": 5400, "health_endpoint": "/api/health", "group": "CK Life OS", "badge": "CK", "badge_class": "c-ckw", "pinned": True, "built": True},
     {"slug": "ckla", "name": "CKLA", "description": "Learning assistant", "port": 5012, "health_endpoint": "/api/health", "group": "CK Life OS", "badge": "LA", "badge_class": "c-ckla", "pinned": True, "built": True},
     # Intelligence
     {"slug": "costanza", "name": "Costanza", "description": "Decision intelligence", "port": 5201, "health_endpoint": "/health", "group": "Intelligence", "badge": "Co", "badge_class": "c-costanza", "pinned": False, "built": True},
@@ -73,12 +74,25 @@ FLEET_REGISTRY: List[Dict[str, Any]] = [
     {"slug": "atlas", "name": "Identity Atlas", "description": "Identity manager", "port": 5300, "health_endpoint": "/api/health", "group": "Intelligence", "badge": "IA", "badge_class": "c-atlas", "pinned": False, "built": False},
     {"slug": "sentinel", "name": "Digital Sentinel", "description": "Security monitor", "port": 5301, "health_endpoint": "/api/health", "group": "Intelligence", "badge": "DS", "badge_class": "c-sentinel", "pinned": True, "built": False},
     # Revenue
-    {"slug": "ripple", "name": "Ripple CRM", "description": "Customer relations", "port": 5001, "health_endpoint": "/api/health", "group": "Revenue", "badge": "Ri", "badge_class": "c-ripple", "pinned": False, "built": False},
+    {"slug": "ripple", "name": "Ripple CRM", "description": "Customer relations", "port": 5100, "health_endpoint": "/api/health", "group": "Revenue", "badge": "Ri", "badge_class": "c-ripple", "pinned": False, "built": False},
     {"slug": "spark", "name": "Spark", "description": "Marketing engine", "port": 5011, "health_endpoint": "/api/health", "group": "Revenue", "badge": "Sp", "badge_class": "c-spark", "pinned": False, "built": False},
     {"slug": "genie", "name": "Genie", "description": "AI Bookkeeper", "port": 5600, "health_endpoint": "/api/health", "group": "Revenue", "badge": "Ge", "badge_class": "c-genie", "pinned": False, "built": False},
     {"slug": "peterman", "name": "Peterman", "description": "Research intelligence", "port": 5008, "health_endpoint": "/api/health", "group": "Revenue", "badge": "Pe", "badge_class": "c-peterman", "pinned": True, "built": True},
+    {"slug": "authorstudio", "name": "Author Studio", "description": "Book publishing, marketing and Amazon management", "port": 5007, "health_endpoint": "/api/health", "group": "Revenue", "badge": "AS", "badge_class": "c-author", "pinned": False, "built": False},
     # Utilities
     {"slug": "junkdrawer", "name": "Junk Drawer", "description": "Quick utilities", "port": 5005, "health_endpoint": "/api/health", "group": "Utilities", "badge": "JD", "badge_class": "c-junk", "pinned": False, "built": True},
+    # New apps — 17 March 2026
+    {"slug": "signal", "name": "Signal", "description": "LinkedIn monitor", "port": 5203, "health_endpoint": "/health", "group": "Intelligence", "badge": "Si", "badge_class": "c-signal", "pinned": False, "built": True},
+    {"slug": "quimby", "name": "Quimby", "description": "Quality inspector", "port": 5101, "health_endpoint": "/health", "group": "Infrastructure", "badge": "Q", "badge_class": "c-quimby", "pinned": False, "built": True},
+    {"slug": "almostbrilliant", "name": "Almost Brilliant", "description": "Free ANZ marketing toolkit", "port": 3002, "health_endpoint": "/health", "group": "Utilities", "badge": "AB", "badge_class": "c-ab", "pinned": False, "built": True},
+    {"slug": "cabinet", "name": "The Cabinet", "description": "C-Suite simulation", "port": 5202, "health_endpoint": "/health", "group": "Intelligence", "badge": "Ca", "badge_class": "c-cabinet", "pinned": False, "built": False},
+    {"slug": "finstrategist", "name": "Fin Strategist", "description": "AI CFO", "port": 5021, "health_endpoint": "/health", "group": "Revenue", "badge": "F$", "badge_class": "c-fin", "pinned": False, "built": False},
+    {"slug": "ledger", "name": "The Ledger", "description": "Financial reporting", "port": 5020, "health_endpoint": "/health", "group": "Revenue", "badge": "Le", "badge_class": "c-ledger", "pinned": False, "built": True},
+    {"slug": "kavacha", "name": "Kavacha", "description": "Security shield", "port": 5099, "health_endpoint": "/health", "group": "Infrastructure", "badge": "K", "badge_class": "c-kavacha", "pinned": False, "built": False},
+    {"slug": "workshop", "name": "Workshop", "description": "Fleet dashboard", "port": 5001, "health_endpoint": "/api/health", "group": "Infrastructure", "badge": "W", "badge_class": "c-workshop", "pinned": True, "built": True},
+    {"slug": "swissarmy", "name": "Swiss Army Knife", "description": "12 text analysis tools", "port": 5014, "health_endpoint": "/health", "group": "CK Life OS", "badge": "SA", "badge_class": "c-swiss", "pinned": False, "built": True},
+    {"slug": "opphunter", "name": "Opp Hunter", "description": "Opportunity tracker", "port": 5006, "health_endpoint": "/health", "group": "Revenue", "badge": "OH", "badge_class": "c-opp", "pinned": False, "built": True},
+    {"slug": "processlens", "name": "ProcessLens", "description": "Process mapping and analysis", "port": 5016, "health_endpoint": "/health", "group": "Intelligence", "badge": "PL", "badge_class": "c-process", "pinned": False, "built": True},
 ]
 
 GROUP_ORDER = ["Infrastructure", "CK Life OS", "Intelligence", "Revenue", "Utilities"]
